@@ -49,6 +49,7 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.canvasElement.style.width  = (this.fontX * 27) + 'px';
   this.canvasElement.style.height = (this.fontY * 48) + 'px';
   this.canvasContext = this.canvasElement.getContext("2d");
+  this.canvasContext.fillStyle = 'white';
 
   // initial drawing
   this.draw(true);
@@ -60,18 +61,17 @@ GotandaDiamondMine.prototype.pointHTML = function (x, y) {
 };
 
 GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
-GotandaDiamondMine.prototype.draw = function () {
+GotandaDiamondMine.prototype.draw = function (initial) {
   var screen = this.getScreen();
   var context = this.canvasContext;
+  var old_screen = initial ? null : this.oldScreen;
   var dw = this.fontX, dh = this.fontY;
-  context.fillStyle = 'red';
-  context.fillRect(0, 0, 216, 384);
   for (var y = 0; y < 48; ++y) {
     for (var x = 0; x < 27; ++x) {
       var str = screen[y][x];
-      //if (old_screen && str == old_screen[y][x]) {
-      //  continue;
-      //}
+      if (old_screen && str == old_screen[y][x]) {
+        continue;
+      }
 
       var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
       if (colors) {
@@ -85,10 +85,13 @@ GotandaDiamondMine.prototype.draw = function () {
       var char_code = str.charCodeAt(0);
       var dx = dw * x, dy = dh * y;
       var sx = char_code % GotandaDiamondMine.TILE_IMAGE_8x8_COLS, sy = Math.floor(char_code / GotandaDiamondMine.TILE_IMAGE_8x8_COLS);
+      context.fillRect(dx, dy, dw, dh);
       context.drawImage(GotandaDiamondMine.TILE_IMAGE_8x8, sx * dw, sy * dh, dw, dh, dx, dy, dw, dh);
       if (colors) {
         //this.tile = this.tile_white;
       }
     }
   }
+
+  this.oldScreen = screen.map(function (row) { return row.concat(); });
 };
