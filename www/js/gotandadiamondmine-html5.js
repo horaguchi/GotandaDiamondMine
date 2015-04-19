@@ -1,0 +1,4 @@
+
+GotandaDiamondMine.prototype.hoge = function () {
+};
+

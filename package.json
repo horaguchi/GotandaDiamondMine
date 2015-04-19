@@ -1,0 +1,38 @@
+{
+  "name": "GotandaDiamondMine",
+  "version": "0.0.1",
+  "description": "A roguelike gotanda diamond mine",
+  "keywords": [
+    "roguelike",
+    "turn-based",
+    "strategy",
+    "TBS",
+    "game"
+  ],
+  "homepage": "https://github.com/horaguchi/GotandaDiamondMine",
+  "bugs": {
+    "url": "https://github.com/horaguchi/GotandaDiamondMine/issues"
+  },
+  "license": "Apache License 2.0",
+  "author": "Koji Horaguchi <koji.horaguchi@gmail.com> (http://horaguchi.github.io/)",
+  "main": "./gotandadiamondmine.js",
+  "bin": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/horaguchi/GotandaDiamondMine.git"
+  },
+  "scripts": {
+    "prepublish": "node ./scripts/prepublish/browserify.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "pathfinding": "~0.4.17",
+    "blessed": "~0.1.5"
+  },
+  "devDependencies": {
+    "browserify": "~9.0.8"
+  }
+}
