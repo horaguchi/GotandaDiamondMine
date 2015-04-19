@@ -92,6 +92,8 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       }
     }
   }
-
+  context.fillStyle = 'red';
+  context.fillText(this.maxWidth + "," + window.innerHeight, 30, 30);
+  context.fillStyle = 'white';
   this.oldScreen = screen.map(function (row) { return row.concat(); });
 };
