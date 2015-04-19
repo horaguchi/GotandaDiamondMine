@@ -20,6 +20,7 @@
 package net.horaguchi.gotandadiamondmine;
 
 import android.os.Bundle;
+import android.webkit.WebSettings;
 import org.apache.cordova.*;
 
 public class CordovaApp extends CordovaActivity
@@ -31,5 +32,11 @@ public class CordovaApp extends CordovaActivity
         super.init();
         // Set by <content src="index.html" /> in config.xml
         loadUrl(launchUrl);
+        // https://sites.google.com/site/heppokobibouroku/puroguramutoka/phonegap-cordova/android/viewportga-xiaokanai
+        WebSettings ws = super.appView.getSettings();
+        //ws.setBuiltInZoomControls(true);
+        ws.setLoadWithOverviewMode(true);
+        ws.setUseWideViewPort(true);
+        super.appView.setInitialScale(1);
     }
 }

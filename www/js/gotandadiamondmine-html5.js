@@ -29,17 +29,16 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
     }
     gdm.resizeTimer = setTimeout(function () {
       gdm.resizeCanvas();
-    }, 300);
+    }, 100);
   });
 
 };
 
 GotandaDiamondMine.prototype.resizeCanvas = function () {
-  if (this.maxWidth && this.maxWidth == window.innerWidth) {
+  if (this.maxWidth  && this.maxWidth  == window.innerWidth &&
+      this.maxHeight && this.maxHeight == window.innerHeight) {
     return; // nothing to do
   }
-  var max_width = window.innerWidth;
-  this.maxWidth = max_width;
 
   this.fontX = 8; this.fontY = 8;
   this.canvasElement.setAttribute('width',  this.fontX * 27);
@@ -50,6 +49,12 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.canvasElement.style.height = (this.fontY * 48) + 'px';
   this.canvasContext = this.canvasElement.getContext("2d");
   this.canvasContext.fillStyle = 'white';
+
+  var viewport = document.querySelector("meta[name=viewport]");
+  var new_width = Math.round(this.fontY * 48 * window.innerWidth / window.innerHeight);
+  viewport.setAttribute('content', 'width=' + (new_width - new_width % 10 + 10));
+  this.maxWidth  = window.innerWidth;
+  this.maxHeight = window.innerHeight;
 
   // initial drawing
   this.draw(true);
@@ -84,7 +89,8 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       }
       var char_code = str.charCodeAt(0);
       var dx = dw * x, dy = dh * y;
-      var sx = char_code % GotandaDiamondMine.TILE_IMAGE_8x8_COLS, sy = Math.floor(char_code / GotandaDiamondMine.TILE_IMAGE_8x8_COLS);
+      var sx = char_code % GotandaDiamondMine.TILE_IMAGE_8x8_COLS;
+      var sy = Math.floor(char_code / GotandaDiamondMine.TILE_IMAGE_8x8_COLS);
       context.fillRect(dx, dy, dw, dh);
       context.drawImage(GotandaDiamondMine.TILE_IMAGE_8x8, sx * dw, sy * dh, dw, dh, dx, dy, dw, dh);
       if (colors) {
@@ -92,8 +98,9 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       }
     }
   }
+  // for debug
   context.fillStyle = 'red';
-  context.fillText(this.maxWidth + "," + window.innerHeight + ',' + window.devicePixelRatio, 30, 350);
+  context.fillText(this.maxWidth + "," + this.maxHeight + ',' + window.devicePixelRatio, 30, 350);
   context.fillStyle = 'white';
   this.oldScreen = screen.map(function (row) { return row.concat(); });
 };
