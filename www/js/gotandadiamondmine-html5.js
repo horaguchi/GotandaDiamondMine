@@ -48,7 +48,7 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.canvasElement.style.width  = (this.fontX * 27) + 'px';
   this.canvasElement.style.height = (this.fontY * 48) + 'px';
   this.canvasContext = this.canvasElement.getContext("2d");
-  this.canvasContext.fillStyle = 'white';
+  this.canvasContext.fillStyle = this.fillStyle = 'white';
 
   var viewport = document.querySelector("meta[name=viewport]");
   var new_width = Math.round(this.fontY * 48 * window.innerWidth / window.innerHeight);
@@ -80,12 +80,14 @@ GotandaDiamondMine.prototype.draw = function (initial) {
 
       var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
       if (colors) {
-        if (colors[1] == 'red') {
-          //this.tile = this.tile_red;
-        } else if (colors[1] == 'yellow') {
-          //this.tile = this.tile_yellow;
+        if (this.fillStyle != colors[1]) {
+          context.fillStyle = this.fillStyle = colors[1];
         }
         str = colors[2];
+      } else {
+        if (this.fillStyle != 'white') {
+          context.fillStyle = this.fillStyle = 'white';
+        }
       }
       var char_code = str.charCodeAt(0);
       var dx = dw * x, dy = dh * y;
@@ -93,14 +95,11 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       var sy = Math.floor(char_code / GotandaDiamondMine.TILE_IMAGE_8x8_COLS);
       context.fillRect(dx, dy, dw, dh);
       context.drawImage(GotandaDiamondMine.TILE_IMAGE_8x8, sx * dw, sy * dh, dw, dh, dx, dy, dw, dh);
-      if (colors) {
-        //this.tile = this.tile_white;
-      }
     }
   }
   // for debug
-  context.fillStyle = 'red';
-  context.fillText(this.maxWidth + "," + this.maxHeight + ',' + window.devicePixelRatio, 30, 350);
-  context.fillStyle = 'white';
+  //context.fillStyle = 'red';
+  //context.fillText(this.maxWidth + "," + this.maxHeight + ',' + window.devicePixelRatio, 30, 350);
+  //context.fillStyle = 'white';
   this.oldScreen = screen.map(function (row) { return row.concat(); });
 };

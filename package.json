@@ -33,6 +33,7 @@
     "blessed": "~0.1.5"
   },
   "devDependencies": {
-    "browserify": "~9.0.8"
+    "browserify": "~9.0.8",
+    "shelljs": "~0.4.0"
   }
 }
