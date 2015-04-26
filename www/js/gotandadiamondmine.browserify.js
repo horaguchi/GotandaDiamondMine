@@ -73,35 +73,6 @@ if (typeof module === "object" && module) {
   module.exports = GotandaDiamondMine;
 }
 
-GotandaDiamondMine.prototype.calculatePath = function () {
-  var matrix = this.mapSymbol.map(function (row) {
-    return row.map(function (value) {
-      return value != '.' && value != '1' && value != '2' && value != '>' && value != '@';
-    });
-  });
-  var grid = new PF.Grid(27, 27, matrix);
-  var finder = this.finder;
-  var points = this.points;
-  var all_path = [];
-  for (var i = 1; i < points.length; ++i) {
-    var path = finder.findPath(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1], grid.clone());
-    path.pop();
-    all_path = all_path.concat(path);
-  }
-  var map_symbol = this.mapSymbol;
-  var map_color = this.mapColor;
-  for (var i = 0; i < this.path.length; ++i) {
-    var path = this.path[i];
-    if (map_symbol[path[1]][path[0]] == '.') {
-      map_color[path[1]][path[0]] = 'gray';
-    }
-  }
-  for (var i = 0; i < all_path.length; ++i) {
-    var path = all_path[i];
-    map_color[path[1]][path[0]] = 'yellow';
-  }
-  this.path = all_path;
-};
 
 GotandaDiamondMine.prototype.point = function (x, y) {
   console.log('point:', x, y); // for debug
@@ -151,10 +122,6 @@ GotandaDiamondMine.prototype.point = function (x, y) {
         this.state = GotandaDiamondMine.STATE_PLACE;
         this.placing_item = this.items.length;
         this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
-        this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
-        this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
-        this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
-        this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
         this.selected_place = null;
         return true;
       }
@@ -168,10 +135,17 @@ GotandaDiamondMine.prototype.point = function (x, y) {
           this.mapSymbol[this.selected_place[1]][this.selected_place[0]] = '.';
           this.mapColor[this.selected_place[1]][this.selected_place[0]] = 'gray';
         }
-        this.selected_place = [ x, y - 6 ];
         this.mapSymbol[y - 6][x] = '/';
-        this.mapColor[y - 6][x] = 'white';
-        this.calculatePath();
+        if (this.calculatePath()) {
+          this.selected_place = [ x, y - 6 ];
+          this.mapColor[y - 6][x] = 'white';
+        } else { // blocking
+          if (this.selected_place) { // Cancel place before
+            this.mapSymbol[this.selected_place[1]][this.selected_place[0]] = '/';
+            this.mapColor[this.selected_place[1]][this.selected_place[0]] = 'white';
+          }
+          this.mapSymbol[y - 6][x] = '.';
+        }
         return true;
       }
 
@@ -269,6 +243,43 @@ GotandaDiamondMine.prototype.getWaveInfo = function () {
     }
   }
   return wave_now.concat(GotandaDiamondMine.colorScreen(wave_next, 'gray'));
+};
+
+GotandaDiamondMine.prototype.calculatePath = function () {
+  var matrix = this.mapSymbol.map(function (row) {
+    return row.map(function (value) {
+      return value != '.' && value != '1' && value != '2' && value != '>';
+    });
+  });
+  var grid = new PF.Grid(27, 27, matrix);
+  var finder = this.finder;
+  var points = this.points;
+  var all_path = [];
+  for (var i = 1; i < points.length; ++i) {
+    if (i == points.length - 1) { // final @ is walkable
+      grid.setWalkableAt(points[i][0], points[i][1], true);
+    }
+    var path = finder.findPath(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1], grid.clone());
+    if (path.length == 0) {
+      return false; // path is blocking
+    }
+    path.pop();
+    all_path = all_path.concat(path);
+  }
+  var map_symbol = this.mapSymbol;
+  var map_color = this.mapColor;
+  for (var i = 0; i < this.path.length; ++i) {
+    var path = this.path[i];
+    if (map_symbol[path[1]][path[0]] == '.') {
+      map_color[path[1]][path[0]] = 'gray';
+    }
+  }
+  for (var i = 0; i < all_path.length; ++i) {
+    var path = all_path[i];
+    map_color[path[1]][path[0]] = 'yellow';
+  }
+  this.path = all_path;
+  return true;
 };
 
 GotandaDiamondMine.prototype.getMap = function () {
