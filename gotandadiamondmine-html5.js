@@ -12,6 +12,9 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     if (gdm.pointHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top)) {
+      if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+        gdm.startAnimation();
+      }
       gdm.draw();
     }
   });
@@ -19,6 +22,9 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     if (gdm.pointHTML(e.clientX - rect.left, e.clientY - rect.top)) {
+      if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+        gdm.startAnimation();
+      }
       gdm.draw();
     }
   });
@@ -102,4 +108,16 @@ GotandaDiamondMine.prototype.draw = function (initial) {
   //context.fillText(this.maxWidth + "," + this.maxHeight + ',' + window.devicePixelRatio, 30, 350);
   //context.fillStyle = 'white';
   this.oldScreen = screen.map(function (row) { return row.concat(); });
+};
+
+GotandaDiamondMine.prototype.startAnimation = function () {
+  var gdm = this;
+  this.animationInterval = setInterval(function () {
+    gdm.point(0, 0);
+    gdm.draw();
+    if (gdm.state != GotandaDiamondMine.STATE_ANIMATION) {
+      clearInterval(gdm.animationInterval);
+      gdm.animationInterval = null;
+    }
+  }, 100);
 };
