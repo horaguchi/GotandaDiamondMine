@@ -42,21 +42,17 @@ var GotandaDiamondMine = function () {
   this.mapSymbol[15][20] = '1';
   this.mapSymbol[5][5]   = '2';
   this.mapSymbol[13][13] = '@';
+  this.mapColor[13][13] = 'white';
   this.path = [];
   this.calculatePath();
   this.wave = 0;
   this.waves = [
-    [ '*', 0, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'B', 1, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'C', 2, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'D', 3, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'E', 4, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'F', 5, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'G', 6, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'H', 7, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'I', 8, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'J', 9, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ],
-    [ 'K',10, [ null, null ], [ 'HP', parseInt(Math.random() * 100) ] ]
+    [ '*', 0, [ null, null ], { hp: 0 } ],
+    [ 'B', 1, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
+    [ 'C', 2, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
+    [ 'D', 3, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
+    [ 'E', 4, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
+    [ 'F', 5, [ null, null ], { hp: parseInt(Math.random() * 100) } ]
   ];
 };
 
@@ -76,72 +72,79 @@ if (typeof module === "object" && module) {
 GotandaDiamondMine.prototype.point = function (x, y) {
   console.log('point:', x, y); // for debug
   var state = this.state;
+  // TITLE
   if (state == GotandaDiamondMine.STATE_TITLE) {
     if (5 <= x && x <= 21 && 34 <= y && y <= 36) { // Start
       this.state = GotandaDiamondMine.STATE_CHOOSE_CLASS;
-      this.selected_class = null;
+      this.selectedClass = null;
       return true;
     }
+
+  // CHOOSE CLASS
   } else if (state == GotandaDiamondMine.STATE_CHOOSE_CLASS) {
     if (0 <= x && x <= 26 && 0 <= y && y <= 8) { // Class 1
-      this.selected_class = 1;
+      this.selectedClass = 1;
       return true;
     } else if (0 <= x && x <= 26 && 9 <= y && y <= 17) { // Class 2
-      this.selected_class = 2;
+      this.selectedClass = 2;
       return true;
     } else if (0 <= x && x <= 26 && 18 <= y && y <= 26) { // Class 3
-      this.selected_class = 3;
+      this.selectedClass = 3;
       return true;
     } else if (0 <= x && x <= 26 && 27 <= y && y <= 35) { // Class 4
-      this.selected_class = 4;
+      this.selectedClass = 4;
       return true;
     } else if (0 <= x && x <= 26 && 36 <= y && y <= 44) { // Class 5
-      this.selected_class = 5;
+      this.selectedClass = 5;
       return true;
     } else if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // Next
       return true;
     } else if (14 <= x && x <= 26 && 45 <= y && y <= 47) { // OK
-      if (this.selected_class) {
+      if (this.selectedClass) {
         this.state = GotandaDiamondMine.STATE_CONFIRM;
         return true;
       }
     }
+
+  // CHOOSE ITEM
   } else if (state == GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     if (0 <= x && x <= 26 && 6 <= y && y <= 14) { // Item 1
-      this.selected_item = 1;
+      this.selectedItem = 1;
       return true;
     } else if (0 <= x && x <= 26 && 15 <= y && y <= 23) { // Item 2
-      this.selected_item = 2;
+      this.selectedItem = 2;
       return true;
     } else if (0 <= x && x <= 26 && 24 <= y && y <= 32) { // Item 3
-      this.selected_item = 3;
+      this.selectedItem = 3;
       return true;
     } else if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // OK
-      if (this.selected_item) {
+      if (this.selectedItem) {
         this.state = GotandaDiamondMine.STATE_PLACE;
-        this.placing_item = this.items.length;
+        this.placingItem = this.items.length;
         this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
-        this.selected_place = null;
+        this.selectedPlace = null;
         return true;
       }
     } else if (14 <= x && x <= 26 && 45 <= y && y <= 47) { // 
       //
     }
+
+  // PLACE ITEM
   } else if (state == GotandaDiamondMine.STATE_PLACE) {
     if (0 <= x && x <= 26 && 6 <= y && y <= 32) { // Map
       if (this.mapSymbol[y - 6][x] == '.') {
-        if (this.selected_place) { // Cancel place before
-          this.mapSymbol[this.selected_place[1]][this.selected_place[0]] = '.';
-          this.mapColor[this.selected_place[1]][this.selected_place[0]] = 'gray';
+        if (this.selectedPlace) { // Cancel place before
+          this.mapSymbol[this.selectedPlace[1]][this.selectedPlace[0]] = '.';
+          this.mapColor[this.selectedPlace[1]][this.selectedPlace[0]] = 'gray';
         }
         this.mapSymbol[y - 6][x] = '/';
         if (this.calculatePath()) {
-          this.selected_place = [ x, y - 6 ];
-          this.mapColor[y - 6][x] = 'white';
+          this.selectedPlace = [ x, y - 6 ];
+          this.mapColor[y - 6][x] = 'white'; // for save yellow color
         } else { // blocking
-          if (this.selected_place) { // Cancel place before
-            this.mapSymbol[this.selected_place[1]][this.selected_place[0]] = '/';
-            this.mapColor[this.selected_place[1]][this.selected_place[0]] = 'white';
+          if (this.selectedPlace) { // Cancel place before
+            this.mapSymbol[this.selectedPlace[1]][this.selectedPlace[0]] = '/';
+            this.mapColor[this.selectedPlace[1]][this.selectedPlace[0]] = 'white';
           }
           this.mapSymbol[y - 6][x] = '.';
         }
@@ -149,50 +152,78 @@ GotandaDiamondMine.prototype.point = function (x, y) {
       }
 
     } else if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // OK or Undo
-      if (this.selected_place) { // OK
-        this.items[this.placing_item][2] = this.selected_place;
-        ++this.placing_item;
-        if (this.placing_item == this.items.length) {
+      if (this.selectedPlace) { // OK
+        this.items[this.placingItem][2] = this.selectedPlace;
+        ++this.placingItem;
+        if (this.placingItem == this.items.length) {
           this.state = GotandaDiamondMine.STATE_CONFIRM;
         } else {
-          this.selected_place = null;
+          this.selectedPlace = null;
         }
         return true;
-      } else if (0 < this.placing_item) { // Undo
-        --this.placing_item;
-        var place = this.items[this.placing_item][2];
+      } else if (0 < this.placingItem) { // Undo
+        --this.placingItem;
+        var place = this.items[this.placingItem][2];
         this.mapSymbol[place[1]][place[0]] = '.';
         this.mapColor[place[1]][place[0]] = 'gray';
-        this.selected_place = null;
+        this.selectedPlace = null;
         return true;
       }
     } else if (14 <= x && x <= 26 && 45 <= y && y <= 47) { // 
       //
     }
+
+  // CONFIRM NEXT WAVE
   } else if (state == GotandaDiamondMine.STATE_CONFIRM) {
     if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // Undo
-      //this.selected_place = this.items[this.items.length - 1][2];
+      //this.selectedPlace = this.items[this.items.length - 1][2];
       var place = this.items[this.items.length - 1][2];
       this.mapSymbol[place[1]][place[0]] = '.';
       this.mapColor[place[1]][place[0]] = 'gray';
-      this.selected_place = null;
-      this.placing_item = this.items.length - 1;
+      this.selectedPlace = null;
+      this.placingItem = this.items.length - 1;
       this.state = GotandaDiamondMine.STATE_PLACE;
       return true;
     } else if (14 <= x && x <= 26 && 45 <= y && y <= 47) { // Next Wave
       this.state = GotandaDiamondMine.STATE_ANIMATION;
-      this.animation_state = 0;
-      this.waves[this.wave][2] = this.path[this.animation_state];
+      this.itemsWait = [];
+      this.waveWait = 0;
+      this.waveState = 0;
+      this.waves[this.wave][2] = this.path[this.waveState];
       return true;
     }
+
+  // WAVE ANIMATION
   } else if (state == GotandaDiamondMine.STATE_ANIMATION) {
-    if (this.path.length - 1 == this.animation_state) { // animation end
-      this.state = GotandaDiamondMine.STATE_CHOOSE_ITEM;
-      this.selected_item = 0;
-    } else {
-      this.animation_state++;
-      this.waves[this.wave][2] = this.path[this.animation_state];
+    // wave move
+    if (!this.waveWait) {
+      if (this.path.length - 1 == this.waveState) { // animation end
+        this.state = GotandaDiamondMine.STATE_CHOOSE_ITEM;
+        this.selectedItem = 0;
+        ++this.wave;
+      } else {
+        this.waves[this.wave][2] = this.path[++this.waveState];
+        this.waveWait = 4;
+      }
     }
+    // items attack
+    var wave_x = this.waves[this.wave][2][0], wave_y = this.waves[this.wave][2][1];
+    var items = this.items;
+    var items_wait = this.itemsWait;
+    for (var i = 0; i < items.length; ++i) {
+      var item = items[i];
+      if (!items_wait[i]) {
+        var item_x = item[2][0], item_y = item[2][1];
+        if (Math.abs(wave_x - item_x) < 2 && Math.abs(wave_y - item_y) < 2) { // attack
+          this.waves[this.wave][3].hp -= 10;
+          items_wait[i] = 4;
+        } else { // no-attack, wait
+          items_wait[i] = 1;
+        }
+      }
+      --items_wait[i];
+    }
+    --this.waveWait;
     return true;
   }
 };
@@ -221,24 +252,22 @@ GotandaDiamondMine.colorScreen = function (arr, color, type, from_x, to_x) {
   return copied;
 };
 
-GotandaDiamondMine.WAVE_ABBR = {
-  'HP': 'HP'
-};
-
 GotandaDiamondMine.toWaveInfoString = function (wave) {
-  return wave[1] + ')' + wave[0] + ' ' + wave.slice(3).map(function (param) {
-    return param[1] + GotandaDiamondMine.WAVE_ABBR[param[0]];
-  }).join(',') + '                           ';
+  return wave[1] + ')' + wave[0] + ' ' + wave[3].hp + 'HP                           ';
 };
 
 GotandaDiamondMine.prototype.getWaveInfo = function () {
   var wave_now = [], wave_next = [];
   for (var i = 0; i < 5; ++i) {
     var wave = this.waves[this.wave + i];
-    if (i == 0) {
-      wave_now.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
+    if (wave) {
+      if (i == 0) {
+        wave_now.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
+      } else {
+        wave_next.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
+      }
     } else {
-      wave_next.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
+      wave_next.push(GotandaDiamondMine.EMPTY_LINE[0]);
     }
   }
   return wave_now.concat(GotandaDiamondMine.colorScreen(wave_next, 'gray'));
@@ -291,7 +320,7 @@ GotandaDiamondMine.prototype.getMap = function () {
     var row = [];
     for (var x = 0; x < 27; ++x) {
       if (state == GotandaDiamondMine.STATE_ANIMATION && wave[2][0] == x && wave[2][1] == y) {
-        row.push('{red-fg}' + wave[0] + '{/red-fg}');
+        row.push(wave[3].hp <= 0 ? '{yellow-fg}*{/yellow-fg}' : '{red-fg}' +  wave[0] + '{/red-fg}');
       } else {
         row.push(map_color[y][x] ? '{' + map_color[y][x] + '-fg}' + map_symbol[y][x] + '{/' + map_color[y][x] + '-fg}' : map_symbol[y][x]);
       }
@@ -338,8 +367,8 @@ GotandaDiamondMine.prototype.getItemInfo = function () {
   for (var i = 0; i < 12; ++i) {
     var index = Math.min(this.items.length > 12 ? this.items.length - 12 + i : i);
     if (state == GotandaDiamondMine.STATE_PLACE) {
-      index = Math.min(index, this.placing_item + i); // for many undos
-      if (index == this.placing_item) {
+      index = Math.min(index, this.placingItem + i); // for many undos
+      if (index == this.placingItem) {
         info = GotandaDiamondMine.colorScreen(info, 'gray');
       }
     }
@@ -359,15 +388,15 @@ GotandaDiamondMine.prototype.getButton = function () {
       ["+","-","-","-","-","-","-","-","-","-","-","-","+"," ","+","-","-","-","-","-","-","-","-","-","-","-","+"],
       ["|"," "," "," ","N","e","x","t"," "," "," "," ","|"," ","|"," "," "," "," ","O","K"," "," "," "," "," ","|"],
       ["+","-","-","-","-","-","-","-","-","-","-","-","+"," ","+","-","-","-","-","-","-","-","-","-","-","-","+"]
-    ], 'gray', 'x', 0, this.selected_class ? 12 : 26);
+    ], 'gray', 'x', 0, this.selectedClass ? 12 : 26);
   } else if (state == GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     return GotandaDiamondMine.colorScreen([
       ["+","-","-","-","-","-","-","-","-","-","-","-","+"," ","+","-","-","-","-","-","-","-","-","-","-","-","+"],
       ["|"," "," "," "," ","O","K"," "," "," "," "," ","|"," ","|"," ","N","e","x","t"," ","W","a","v","e"," ","|"],
       ["+","-","-","-","-","-","-","-","-","-","-","-","+"," ","+","-","-","-","-","-","-","-","-","-","-","-","+"]
-    ], 'gray', 'x', this.selected_item ? 14 : 0, 26);
+    ], 'gray', 'x', this.selectedItem ? 14 : 0, 26);
   } else if (state == GotandaDiamondMine.STATE_PLACE) {
-    if (this.selected_place) {
+    if (this.selectedPlace) {
       return GotandaDiamondMine.colorScreen([
         ["+","-","-","-","-","-","-","-","-","-","-","-","+"," ","+","-","-","-","-","-","-","-","-","-","-","-","+"],
         ["|"," "," "," "," ","O","K"," "," "," "," "," ","|"," ","|"," ","N","e","x","t"," ","W","a","v","e"," ","|"],
@@ -480,7 +509,7 @@ GotandaDiamondMine.EMPTY_BOX = [
 GotandaDiamondMine.prototype.getScreenToChooseClass = function () {
   var classes = [];
   for (var i = 1; i <= 5; ++i) {
-    classes = classes.concat(i == this.selected_class ? GotandaDiamondMine.EMPTY_BOX : GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_BOX, 'gray') );
+    classes = classes.concat(i == this.selectedClass ? GotandaDiamondMine.EMPTY_BOX : GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_BOX, 'gray') );
   }
   return [].concat(classes, this.getButton());
 };
@@ -488,7 +517,7 @@ GotandaDiamondMine.prototype.getScreenToChooseClass = function () {
 GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   var items = [];
   for (var i = 1; i <= 3; ++i) {
-    items = items.concat(i == this.selected_item ? GotandaDiamondMine.EMPTY_BOX : GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_BOX, 'gray') );
+    items = items.concat(i == this.selectedItem ? GotandaDiamondMine.EMPTY_BOX : GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_BOX, 'gray') );
   }
   return [].concat(this.getWaveInfo(), this.getLog(), items, this.getItemInfo(), this.getButton());
 };
