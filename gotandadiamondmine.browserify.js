@@ -44,6 +44,7 @@ var GotandaDiamondMine = function () {
   this.mapSymbol[5][5]   = '2';
   this.mapSymbol[13][13] = '@';
   this.mapColor[13][13] = 'white';
+  this.status = { hp: 10 };
   this.path = [];
   this.calculatePath();
   this.wave = 0;
@@ -122,7 +123,7 @@ GotandaDiamondMine.prototype.point = function (x, y) {
       if (this.selectedItem) {
         this.state = GotandaDiamondMine.STATE_PLACE;
         this.placingItem = this.items.length;
-        this.items.push([ '/', 1, [ null, null ], [ 'Physical', parseInt(Math.random() * 100) ] ]);
+        this.items.push([ '/', 1, [ null, null ], { physical: parseInt(Math.random() * 100) } ]);
         this.selectedPlace = null;
         return true;
       }
@@ -199,6 +200,9 @@ GotandaDiamondMine.prototype.point = function (x, y) {
     // wave move
     if (!this.waveWait) {
       if (this.path.length - 1 == this.waveState) { // animation end
+        if (0 < this.waves[this.wave][3].hp) {
+          --this.status.hp;
+        }
         this.state = GotandaDiamondMine.STATE_CHOOSE_ITEM;
         this.selectedItem = 0;
         ++this.wave;
@@ -268,7 +272,7 @@ GotandaDiamondMine.prototype.getWaveInfo = function () {
         wave_next.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
       }
     } else {
-      wave_next.push(GotandaDiamondMine.EMPTY_LINE[0]);
+      wave_next.push(GotandaDiamondMine.EMPTY_LINE);
     }
   }
   return wave_now.concat(GotandaDiamondMine.colorScreen(wave_next, 'gray'));
@@ -311,6 +315,26 @@ GotandaDiamondMine.prototype.calculatePath = function () {
   return true;
 };
 
+GotandaDiamondMine.EMPTY_LINE = [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "];
+GotandaDiamondMine.prototype.getLog = function () {
+  var state = this.state;
+  if (state == GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+    return [
+      ["C","h","o","o","s","e"," ","a","n"," ","i","t","e","m",":"," "," "," "," "," "," "," "," "," "," "," "," "]
+    ];
+  } else if (state == GotandaDiamondMine.STATE_PLACE) {
+    return [
+      ["P","l","a","c","e"," ","a","n"," ","i","t","e","m",":"," "," "," "," "," "," "," "," "," "," "," "," "," "]
+    ];
+  } else if (state == GotandaDiamondMine.STATE_CONFIRM) {
+    return [
+      ["G","o"," ","t","o"," ","n","e","x","t"," ","w","a","v","e",":"," "," "," "," "," "," "," "," "," "," "," "]
+    ];
+  } else {
+    return [ GotandaDiamondMine.EMPTY_LINE ];
+  }
+};
+
 GotandaDiamondMine.prototype.getMap = function () {
   var state = this.state;
   var map_symbol = this.mapSymbol;
@@ -331,49 +355,34 @@ GotandaDiamondMine.prototype.getMap = function () {
   return map;
 };
 
-GotandaDiamondMine.EMPTY_LINE = [
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
-];
-GotandaDiamondMine.prototype.getLog = function () {
-  var state = this.state;
-  if (state == GotandaDiamondMine.STATE_CHOOSE_ITEM) {
-    return [
-      ["C","h","o","o","s","e"," ","a","n"," ","i","t","e","m",":"," "," "," "," "," "," "," "," "," "," "," "," "]
-    ];
-  } else if (state == GotandaDiamondMine.STATE_PLACE) {
-    return [
-      ["P","l","a","c","e"," ","a","n"," ","i","t","e","m",":"," "," "," "," "," "," "," "," "," "," "," "," "," "]
-    ];
-  } else if (state == GotandaDiamondMine.STATE_CONFIRM) {
-    return [
-      ["G","o"," ","t","o"," ","n","e","x","t"," ","w","a","v","e",":"," "," "," "," "," "," "," "," "," "," "," "]
-    ];
-  } else {
-    return GotandaDiamondMine.EMPTY_LINE;
-  }
+GotandaDiamondMine.prototype.getStatus = function () {
+  return [  ("HP:" + this.status.hp + '                           ').split("") ];
 };
 
 GotandaDiamondMine.ITEM_ABBR = {
-  'Physical': 'Phys'
+  'physical': 'Phys'
 };
 
 GotandaDiamondMine.toItemInfoString = function (item) {
-  return item[0] + item[1] + ' ' + item.slice(3).map(function (param) {
-    return param[1] + GotandaDiamondMine.ITEM_ABBR[param[0]];
-  }).join(',') + '                           ';
+  var info_str = item[0] + item[1];
+  for (var key in item[3]) {
+    info_str += ' ' + item[3][key] + GotandaDiamondMine.ITEM_ABBR[key];
+  }
+  return info_str + '                           ';
 };
+
 GotandaDiamondMine.prototype.getItemInfo = function () {
   var state = this.state;
   var info = [];
-  for (var i = 0; i < 12; ++i) {
-    var index = Math.min(this.items.length > 12 ? this.items.length - 12 + i : i);
+  for (var i = 0; i < 11; ++i) {
+    var index = Math.min(this.items.length > 11 ? this.items.length - 11 + i : i);
     if (state == GotandaDiamondMine.STATE_PLACE) {
       index = Math.min(index, this.placingItem + i); // for many undos
       if (index == this.placingItem) {
         info = GotandaDiamondMine.colorScreen(info, 'gray');
       }
     }
-    info.push(this.items.length <= index ? GotandaDiamondMine.EMPTY_LINE[0] : GotandaDiamondMine.toItemInfoString(this.items[index]).split(""));
+    info.push(this.items.length <= index ? GotandaDiamondMine.EMPTY_LINE : GotandaDiamondMine.toItemInfoString(this.items[index]).split(""));
   }
 
   if (state != GotandaDiamondMine.STATE_PLACE) {
@@ -423,7 +432,7 @@ GotandaDiamondMine.prototype.getButton = function () {
       ["+","-","-","-","-","-","-","-","-","-","-","-","+"," ","+","-","-","-","-","-","-","-","-","-","-","-","+"]
     ], 'gray');
   } else {
-    return [].concat(GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE);
+    return [ GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE ];
   }
 };
 
@@ -520,19 +529,19 @@ GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   for (var i = 1; i <= 3; ++i) {
     items = items.concat(i == this.selectedItem ? GotandaDiamondMine.EMPTY_BOX : GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_BOX, 'gray') );
   }
-  return [].concat(this.getWaveInfo(), this.getLog(), items, this.getItemInfo(), this.getButton());
+  return [].concat(this.getWaveInfo(), this.getLog(), items, this.getStatus(), this.getItemInfo(), this.getButton());
 };
 
 GotandaDiamondMine.prototype.getScreenToPlace = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getItemInfo(), this.getButton());
+  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
 };
 
 GotandaDiamondMine.prototype.getScreenToConfirm = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getItemInfo(), this.getButton());
+  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
 };
 
 GotandaDiamondMine.prototype.getScreenToAnimation = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getItemInfo(), this.getButton());
+  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
 };
 
 },{"pathfinding":2}],2:[function(require,module,exports){
