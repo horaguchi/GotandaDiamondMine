@@ -11,17 +11,32 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
   this.canvasElement.addEventListener('touchstart', function (e) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
-    if (gdm.pointHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top)) {
+    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
+    if (gdm.point(point[0], point[1])) {
       if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
       gdm.draw();
     }
   });
+
+  this.canvasElement.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    var rect = e.target.getBoundingClientRect();
+    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
+    if (gdm.point(point[0], point[1])) {
+      if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+        gdm.startAnimation();
+      }
+      gdm.draw();
+    }
+  });
+
   this.canvasElement.addEventListener('mousedown', function (e) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
-    if (gdm.pointHTML(e.clientX - rect.left, e.clientY - rect.top)) {
+    var point = gdm.getPointFromHTML(e.clientX - rect.left, e.clientY - rect.top);
+    if (gdm.point(point[0], point[1])) {
       if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
@@ -69,6 +84,11 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
 GotandaDiamondMine.prototype.pointHTML = function (x, y) {
   var mx = parseInt(x / this.fontX), my = parseInt(y / this.fontY);
   return this.point(mx, my);
+};
+
+GotandaDiamondMine.prototype.getPointFromHTML = function (x, y) {
+  var mx = parseInt(x / this.fontX), my = parseInt(y / this.fontY);
+  return [ mx, my ];
 };
 
 GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
