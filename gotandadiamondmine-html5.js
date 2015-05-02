@@ -12,26 +12,26 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
-    gdm.touchNow = point;
     if (gdm.point(point[0], point[1])) {
       if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
       gdm.draw();
     }
+    gdm.touchNow = point;
   });
 
   this.canvasElement.addEventListener('touchmove', function (e) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
-    gdm.touchNow = point;
     if (gdm.touchNow[0] !== point[0] && gdm.touchNow[1] !== point[1] && gdm.point(point[0], point[1])) {
       if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
       gdm.draw();
     }
+    gdm.touchNow = point;
   });
 
   this.canvasElement.addEventListener('mousedown', function (e) {
