@@ -9,7 +9,7 @@ var GotandaDiamondMine = function () {
   this.state = GotandaDiamondMine.STATE_TITLE;
   this.items = [];
   this.createMap(); // mapSymbol, mapColor, points, path are created
-  this.status = { hp: 2 };
+  this.status = { hp: 3 };
   this.wave = 0;
   this.waves = [
     [ '*', 0, [ null, null ], { hp: 0 } ],
