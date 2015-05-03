@@ -9,15 +9,15 @@ var GotandaDiamondMine = function () {
   this.state = GotandaDiamondMine.STATE_TITLE;
   this.items = [];
   this.createMap(); // mapSymbol, mapColor, points, path are created
-  this.status = { hp: 3 };
+  this.status = { HP: 3, AC: 0 };
   this.wave = 0;
   this.waves = [
-    [ '*', 0, [ null, null ], { hp: 0 } ],
-    [ 'A', 1, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
-    [ 'B', 2, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
-    [ 'C', 3, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
-    [ 'D', 4, [ null, null ], { hp: parseInt(Math.random() * 100) } ],
-    [ 'E', 5, [ null, null ], { hp: parseInt(Math.random() * 100) } ]
+    [ '*', 0, [ null, null ], { HP: 0 } ],
+    [ 'A', 1, [ null, null ], { HP: parseInt(Math.random() * 100) } ],
+    [ 'B', 2, [ null, null ], { HP: parseInt(Math.random() * 100) } ],
+    [ 'C', 3, [ null, null ], { HP: parseInt(Math.random() * 100) } ],
+    [ 'D', 4, [ null, null ], { HP: parseInt(Math.random() * 100) } ],
+    [ 'E', 5, [ null, null ], { HP: parseInt(Math.random() * 100) } ]
   ];
 };
 
@@ -164,7 +164,7 @@ GotandaDiamondMine.prototype.pointConfirm = function (x, y) {
     var pointed_item = GotandaDiamondMine.getIndexNearPoint(this.items, x, y - 6);
     if (pointed_item !== -1) {
       var item_pos = this.items[pointed_item][2];
-      this.mapColor[item_pos[1]][item_pos[0]] = 'fuchsia';
+      this.mapColor[item_pos[1]][item_pos[0]] = 'aqua';
       this.confirmingItem = pointed_item;
       this.changeState(GotandaDiamondMine.STATE_UPGRADE);
       return true;
@@ -186,16 +186,22 @@ GotandaDiamondMine.prototype.pointConfirm = function (x, y) {
 GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
   if (0 <= x && x <= 26 && 6 <= y && y <= 32) { // Map
     var pointed_item = GotandaDiamondMine.getIndexNearPoint(this.items, x, y - 6);
-    if (-1 < this.confirmingItem) {
-      var before_item_pos = this.items[this.confirmingItem][2];
+    if (-1 < this.sacrificingItem) {
+      var before_item_pos = this.items[this.sacrificingItem][2];
       this.mapColor[before_item_pos[1]][before_item_pos[0]] = '';
     }
     if (pointed_item === this.confirmingItem) { // same item is to cancel confirming
+      var before_item_pos = this.items[this.confirmingItem][2];
+      this.mapColor[before_item_pos[1]][before_item_pos[0]] = '';
       this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+    } else if (pointed_item === this.sacrificingItem) {
+      var before_item_pos = this.items[this.sacrificingItem][2];
+      this.mapColor[before_item_pos[1]][before_item_pos[0]] = '';
+      this.sacrificingItem = -1;
     } else {
       var item_pos = this.items[pointed_item][2];
       this.mapColor[item_pos[1]][item_pos[0]] = 'fuchsia';
-      this.confirmingItem = pointed_item;
+      this.sacrificingItem = pointed_item;
     }
     return true;
 
@@ -210,11 +216,11 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
   // wave move
   if (!this.waveWait) {
     if (this.path.length - 1 === this.waveState) { // animation end
-      if (0 < this.waves[this.wave][3].hp) {
-        --this.status.hp;
+      if (0 < this.waves[this.wave][3].HP) {
+        --this.status.HP;
       }
       ++this.wave;
-      if (this.status.hp <= 0) {
+      if (this.status.HP <= 0) {
         this.changeState(GotandaDiamondMine.STATE_DEFEATED);
       } else if (this.wave === this.waves.length) {
         this.changeState(GotandaDiamondMine.STATE_VICTORY);
@@ -236,7 +242,7 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
     if (!items_wait[i]) {
       var item_x = item[2][0], item_y = item[2][1];
       if (Math.abs(wave_x - item_x) < 2 && Math.abs(wave_y - item_y) < 2) { // attack
-        this.waves[this.wave][3].hp -= 10;
+        this.waves[this.wave][3].HP -= 10;
         items_wait[i] = 4;
       } else { // no-attack, wait
         items_wait[i] = 1;
@@ -283,7 +289,7 @@ GotandaDiamondMine.prototype.createMap = function () {
   ];
   this.mapColor = this.mapSymbol.map(function (row) { return row.map(function (value) { return "gray"; }); });
 
-  var points_num = Math.floor(Math.random() * 4) + 2;
+  var points_num = Math.floor(Math.random() * 3) + 2; // 1 ~ 3
   var points = [ ];
   for (var i = 0; i < points_num; ++i) {
     var point = [ ];
@@ -436,7 +442,7 @@ GotandaDiamondMine.colorScreen = function (arr, color, type, from_x, to_x) {
 // Game Display Methods
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.toWaveInfoString = function (wave) {
-  return wave[1] + ')' + wave[0] + ' ' + wave[3].hp + 'HP                           ';
+  return wave[1] + ')' + wave[0] + ' ' + wave[3].HP + 'HP                           ';
 };
 
 GotandaDiamondMine.prototype.getWaveInfo = function () {
@@ -488,7 +494,7 @@ GotandaDiamondMine.prototype.getMap = function () {
     var row = [];
     for (var x = 0; x < 27; ++x) {
       if (state === GotandaDiamondMine.STATE_ANIMATION && wave[2][0] === x && wave[2][1] === y) {
-        row.push(wave[3].hp <= 0 ? '{yellow-fg}*{/yellow-fg}' : '{red-fg}' +  wave[0] + '{/red-fg}');
+        row.push(wave[3].HP <= 0 ? '{yellow-fg}*{/yellow-fg}' : '{red-fg}' +  wave[0] + '{/red-fg}');
       } else {
         row.push(map_color[y][x] ? '{' + map_color[y][x] + '-fg}' + map_symbol[y][x] + '{/' + map_color[y][x] + '-fg}' : map_symbol[y][x]);
       }
@@ -517,7 +523,12 @@ GotandaDiamondMine.prototype.getDetailItemInfo = function (item) { // 27 x 9
 };
 
 GotandaDiamondMine.prototype.getStatus = function () {
-  return [  ("HP:" + this.status.hp + '                           ').split("") ];
+  var info_str = '';
+  var status = this.status;
+  for (var key in status) {
+    info_str += status[key] + key + ' ';
+  }
+  return [ (info_str + '                           ').split("") ];
 };
 
 GotandaDiamondMine.ITEM_ABBR = {
@@ -673,18 +684,8 @@ GotandaDiamondMine.prototype.getScreen = function () {
     return this.getScreenToChooseClass();
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM){
     return this.getScreenToChooseItem();
-  } else if (state === GotandaDiamondMine.STATE_PLACE) {
-    return this.getScreenToPlace();
-  } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
-    return this.getScreenToConfirm();
-  } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
-    return this.getScreenToUpgrade();
-  } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
-    return this.getScreenToAnimation();
-  } else if (state === GotandaDiamondMine.STATE_DEFEATED) {
-    return this.getScreenToDefeated();
-  } else if (state === GotandaDiamondMine.STATE_VICTORY) {
-    return this.getScreenToVictory();
+  } else {
+    return this.getScreenDefault();
   }
 };
 
@@ -717,26 +718,6 @@ GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   return [].concat(this.getWaveInfo(), this.getLog(), items, this.getStatus(), this.getItemInfo(), this.getButton());
 };
 
-GotandaDiamondMine.prototype.getScreenToPlace = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
-};
-
-GotandaDiamondMine.prototype.getScreenToConfirm = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
-};
-
-GotandaDiamondMine.prototype.getScreenToAnimation = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
-};
-
-GotandaDiamondMine.prototype.getScreenToUpgrade = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
-};
-
-GotandaDiamondMine.prototype.getScreenToDefeated = function () {
-  return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
-};
-
-GotandaDiamondMine.prototype.getScreenToVictory = function () {
+GotandaDiamondMine.prototype.getScreenDefault = function () {
   return [].concat(this.getWaveInfo(), this.getLog(), this.getMap(), this.getStatus(), this.getItemInfo(), this.getButton());
 };
