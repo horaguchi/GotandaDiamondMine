@@ -21,15 +21,15 @@ var GotandaDiamondMine = function () {
   ];
 };
 
-GotandaDiamondMine.STATE_TITLE        = 0;
-GotandaDiamondMine.STATE_CHOOSE_CLASS = 1;
-GotandaDiamondMine.STATE_CHOOSE_ITEM  = 2;
-GotandaDiamondMine.STATE_PLACE        = 3;
-GotandaDiamondMine.STATE_CONFIRM      = 4;
-GotandaDiamondMine.STATE_UPGRADE      = 5;
-GotandaDiamondMine.STATE_ANIMATION    = 6;
-GotandaDiamondMine.STATE_DEFEATED     = 7;
-GotandaDiamondMine.STATE_VICTORY      = 8;
+GotandaDiamondMine.STATE_TITLE        = 'title';
+GotandaDiamondMine.STATE_CHOOSE_CLASS = 'choose_class';
+GotandaDiamondMine.STATE_CHOOSE_ITEM  = 'choose_item';
+GotandaDiamondMine.STATE_PLACE        = 'place';
+GotandaDiamondMine.STATE_CONFIRM      = 'confirm';
+GotandaDiamondMine.STATE_UPGRADE      = 'upgrade';
+GotandaDiamondMine.STATE_ANIMATION    = 'animation';
+GotandaDiamondMine.STATE_DEFEATED     = 'defeated';
+GotandaDiamondMine.STATE_VICTORY      = 'victory';
 
 // for node.js, not for CommonJS
 if (typeof module === "object" && module) {
@@ -93,14 +93,14 @@ GotandaDiamondMine.prototype.calculatePath = function () {
   var map_symbol = this.mapSymbol;
   var map_color = this.mapColor;
   for (var i = 0; i < this.path.length; ++i) {
-    var path = this.path[i];
-    if (map_symbol[path[1]][path[0]] === '.') {
-      map_color[path[1]][path[0]] = 'gray';
+    var before_path = this.path[i];
+    if (map_symbol[before_path[1]][before_path[0]] === '.') {
+      map_color[before_path[1]][before_path[0]] = 'gray';
     }
   }
   for (var i = 0; i < all_path.length; ++i) {
-    var path = all_path[i];
-    map_color[path[1]][path[0]] = 'yellow';
+    var next_path = all_path[i];
+    map_color[next_path[1]][next_path[0]] = 'yellow';
   }
   this.path = all_path;
   return true;
@@ -129,19 +129,19 @@ GotandaDiamondMine.colorScreen = function (arr, color, mode, from_x, to_x) {
     }
   } else if (mode === 'x') {
     for (var y = 0; y < copied.length; ++y) {
-      var row = copied[y];
-      for (var x = 0; x < row.length; ++x) {
-        if (from_x <= x && x <= to_x && row[x] && row[x] !== ' ') {
-          row[x] = '{' + color + '-fg}' + row[x] + '{/' + color + '-fg}';
+      var row_x = copied[y];
+      for (var x = 0; x < row_x.length; ++x) {
+        if (from_x <= x && x <= to_x && row_x[x] && row_x[x] !== ' ') {
+          row_x[x] = '{' + color + '-fg}' + row_x[x] + '{/' + color + '-fg}';
         }
       }
     }
   } else {
     for (var y = 0; y < copied.length; ++y) {
-      var row = copied[y];
-      for (var x = 0; x < row.length; ++x) {
-        if (row[x] && row[x] !== ' ') {
-          row[x] = '{' + color + '-fg}' + row[x] + '{/' + color + '-fg}';
+      var row_all = copied[y];
+      for (var x = 0; x < row_all.length; ++x) {
+        if (row_all[x] && row_all[x] !== ' ') {
+          row_all[x] = '{' + color + '-fg}' + row_all[x] + '{/' + color + '-fg}';
         }
       }
     }
@@ -335,16 +335,14 @@ GotandaDiamondMine.prototype.pointUpgradeItem = function (pointed_item) {
     return false;
   }
   if (-1 < this.sacrificingItem) {
-    var before_item_pos = this.items[this.sacrificingItem][2];
-    this.mapColor[before_item_pos[1]][before_item_pos[0]] = '';
+    var before_sac_pos = this.items[this.sacrificingItem][2];
+    this.mapColor[before_sac_pos[1]][before_sac_pos[0]] = '';
   }
   if (pointed_item === this.confirmingItem) { // same item is to cancel confirming
-    var before_item_pos = this.items[this.confirmingItem][2];
-    this.mapColor[before_item_pos[1]][before_item_pos[0]] = '';
+    var before_con_pos = this.items[this.confirmingItem][2];
+    this.mapColor[before_con_pos[1]][before_con_pos[0]] = '';
     this.changeState(GotandaDiamondMine.STATE_CONFIRM);
   } else if (pointed_item === this.sacrificingItem) {
-    var before_item_pos = this.items[this.sacrificingItem][2];
-    this.mapColor[before_item_pos[1]][before_item_pos[0]] = '';
     this.sacrificingItem = -1;
   } else {
     var item_pos = this.items[pointed_item][2];
