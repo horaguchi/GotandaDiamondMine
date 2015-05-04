@@ -1,13 +1,18 @@
 var PF = require("pathfinding");
+var Chance = require("chance");
 
 var GotandaDiamondMine = function () {
   this.finder = new PF.AStarFinder({
     heuristic: PF.Heuristic.euclidean,
     diagonalMovement: PF.DiagonalMovement.Never
   });
+  this.chance = new Chance();
 
   this.state = GotandaDiamondMine.STATE_TITLE;
   this.items = [];
+  this.itemChoices = [];
+  this.itemsInDeck = [];
+  this.itemsToDeck = [];
   this.createMap(); // mapSymbol, mapColor, points, path are created
   this.status = { }; // updated when class is choosed
   this.wave = 0;
@@ -40,7 +45,7 @@ if (typeof module === "object" && module) {
 // Common Definitions
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.CLASSES = [
-  { HP: 20, STR: 3, itemTemplates: '||||||||//' }
+  { HP: 20, STR: 3, deckTemplate: '||//' }
 ];
 
 GotandaDiamondMine.ITEMS = [
@@ -201,38 +206,32 @@ GotandaDiamondMine.prototype.pointTitle = function (x, y) {
 };
 
 GotandaDiamondMine.prototype.pointChooseClass = function (x, y) {
-  if (0 <= x && x <= 26 && 0 <= y && y <= 8) { // Class 1
-    if (1 <= this.classChoices.length) {
-      this.selectedClass = 0;
-      return true;
-    }
-  } else if (0 <= x && x <= 26 && 9 <= y && y <= 17) { // Class 2
-    if (2 <= this.classChoices.length) {
-      this.selectedClass = 1;
-      return true;
-    }
-  } else if (0 <= x && x <= 26 && 18 <= y && y <= 26) { // Class 3
-    if (3 <= this.classChoices.length) {
-      this.selectedClass = 2;
-      return true;
-    }
-  } else if (0 <= x && x <= 26 && 27 <= y && y <= 35) { // Class 4
-    if (4 <= this.classChoices.length) {
-      this.selectedClass = 3;
-      return true;
-    }
-  } else if (0 <= x && x <= 26 && 36 <= y && y <= 44) { // Class 5
-    if (5 <= this.classChoices.length) {
-      this.selectedClass = 4;
-      return true;
-    }
+  if (0 <= x && x <= 26 && 0 <= y && y <= 8 && 1 <= this.classChoices.length) { // Class 1
+    this.selectedClass = 0;
+    return true;
+  } else if (0 <= x && x <= 26 && 9 <= y && y <= 17 && 2 <= this.classChoices.length) { // Class 2
+    this.selectedClass = 1;
+    return true;
+  } else if (0 <= x && x <= 26 && 18 <= y && y <= 26 && 3 <= this.classChoices.length) { // Class 3
+    this.selectedClass = 2;
+    return true;
+  } else if (0 <= x && x <= 26 && 27 <= y && y <= 35 && 4 <= this.classChoices.length) { // Class 4
+    this.selectedClass = 3;
+    return true;
+  } else if (0 <= x && x <= 26 && 36 <= y && y <= 44 && 5 <= this.classChoices.length) { // Class 5
+    this.selectedClass = 4;
+    return true;
   } else if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // Next
     //
   } else if (14 <= x && x <= 26 && 45 <= y && y <= 47) { // OK
     if (this.selectedClass !== -1) {
       var selected_class = this.classChoices[this.selectedClass];
       for (var key in selected_class) {
-        this.status[key] = selected_class[key];
+        if (key === 'deckTemplate') {
+          this.createDeckFromTemplate(selected_class[key]);
+        } else {
+          this.status[key] = selected_class[key];
+        }
       }
       this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       return true;
@@ -241,30 +240,19 @@ GotandaDiamondMine.prototype.pointChooseClass = function (x, y) {
 };
 
 GotandaDiamondMine.prototype.pointChooseItem = function (x, y) {
-  if (0 <= x && x <= 26 && 6 <= y && y <= 14) { // Item 1
+  if (0 <= x && x <= 26 && 6 <= y && y <= 14 && 1 <= this.itemChoices.length) { // Item 1
     this.selectedItem = 0;
     return true;
-  } else if (0 <= x && x <= 26 && 15 <= y && y <= 23) { // Item 2
+  } else if (0 <= x && x <= 26 && 15 <= y && y <= 23 && 2 <= this.itemChoices.length) { // Item 2
     this.selectedItem = 1;
     return true;
-  } else if (0 <= x && x <= 26 && 24 <= y && y <= 32) { // Item 3
+  } else if (0 <= x && x <= 26 && 24 <= y && y <= 32 && 3 <= this.itemChoices.length) { // Item 3
     this.selectedItem = 2;
     return true;
   } else if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // OK
     if (this.selectedItem !== -1) {
       this.items.push(this.itemChoices[this.selectedItem].concat());
-      this.items.push(this.itemChoices[0].concat());
-      this.items.push(this.itemChoices[1].concat());
-      this.items.push(this.itemChoices[2].concat());
-      this.items.push(this.itemChoices[0].concat());
-      this.items.push(this.itemChoices[1].concat());
-      this.items.push(this.itemChoices[2].concat());
-      this.items.push(this.itemChoices[0].concat());
-      this.items.push(this.itemChoices[1].concat());
-      this.items.push(this.itemChoices[2].concat());
-      this.items.push(this.itemChoices[0].concat());
-      this.items.push(this.itemChoices[1].concat());
-      this.items.push(this.itemChoices[2].concat());
+      this.itemChoices.splice(this.selectedItem, 1);
       this.changeState(GotandaDiamondMine.STATE_PLACE);
       return true;
     }
@@ -500,12 +488,29 @@ GotandaDiamondMine.prototype.createClassChoices = function () {
   this.classChoices = GotandaDiamondMine.CLASSES.concat(); // TODO
 };
 
+GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
+  var array = template.split('');
+  var deck = [];
+  var symbol;
+  var check_symbol = function (item) {
+    return item[0] === symbol;
+  };
+  for (var i = 0; i < array.length; ++i) {
+    symbol = array[i];
+    deck.push(GotandaDiamondMine.ITEMS.filter(check_symbol)[0]);
+  }
+  this.itemsToDeck = deck;
+};
+
 GotandaDiamondMine.prototype.createItemChoices = function () {
-  this.itemChoices = [
-    [ '|', 'a dagger', 1, [ null, null ], { "Physical Damage": Math.floor(Math.random() * 3 + 1) + "d" + Math.floor(Math.random() * 12 + 1) } ],
-    [ '\\', 'a mace', 1, [ null, null ], { "Lightning Damage": Math.floor(Math.random() * 3 + 10) + "d" + Math.floor(Math.random() * 12 + 10) } ],
-    [ '/', 'a pole axe', 1, [ null, null ], { "Physical Damage": Math.floor(Math.random() * 3 + 1) + "d" + Math.floor(Math.random() * 12 + 1) } ]
- ];
+  if (this.itemChoices.length === 0 && this.itemsInDeck.length === 0) { // reset deck
+    this.itemsInDeck = this.chance.shuffle(this.itemsToDeck);
+  }
+  if (this.itemChoices.length !== 3 && this.itemsInDeck.length !== 0) { // draw deck
+    while (this.itemsInDeck.length !== 0 && this.itemChoices.length < 3) {
+      this.itemChoices.push(this.itemsInDeck.pop());
+    }
+  }
 };
 
 
@@ -579,7 +584,7 @@ GotandaDiamondMine.prototype.getStatus = function () {
   for (var key in status) {
     info_str += status[key] + key + ' ';
   }
-  return [ (info_str + '                           ').split("") ];
+  return [ (info_str + this.itemsInDeck.length + 'Items                           ').split("") ];
 };
 
 GotandaDiamondMine.toItemInfoString = function (item) {
@@ -830,7 +835,7 @@ GotandaDiamondMine.getDetailItemInfo = function (item) { // 27 x 9
 GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   var items = [];
   for (var i = 0; i < 3; ++i) {
-    var item = GotandaDiamondMine.getDetailItemInfo(this.itemChoices[i]);
+    var item = this.itemChoices[i] ? GotandaDiamondMine.getDetailItemInfo(this.itemChoices[i]) : GotandaDiamondMine.EMPTY_BOX;
     items = items.concat(i === this.selectedItem ? item : GotandaDiamondMine.colorScreen(item, 'gray'));
   }
   return [].concat(this.getWaveInfo(), this.getLog(), items, this.getStatus(), this.getItemInfo(), this.getButton());
