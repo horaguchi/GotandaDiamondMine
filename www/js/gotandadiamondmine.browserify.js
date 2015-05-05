@@ -585,7 +585,7 @@ GotandaDiamondMine.prototype.getStatus = function () {
   for (var key in status) {
     info_str += status[key] + key + ' ';
   }
-  return [ (info_str + this.itemsInDeck.length + 'Items                           ').split("") ];
+  return [ (info_str + this.itemChoices.length + '+' + this.itemsInDeck.length + 'Items                           ').split("") ];
 };
 
 GotandaDiamondMine.toItemInfoString = function (item) {
