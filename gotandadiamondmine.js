@@ -9,21 +9,10 @@ var GotandaDiamondMine = function () {
   this.chance = new Chance();
 
   this.state = GotandaDiamondMine.STATE_TITLE;
-  this.itemsOnMap = [];
-  this.itemsOnHand = [];
-  this.itemsInDeck = [];
   this.itemsInOriginalDeck = [];
-  this.createMap(); // mapSymbol, mapColor, points, path are created
+  this.itemsInShop = [];
   this.status = { }; // updated when hero is choosed
-  this.wave = 0;
-  this.waves = [
-    [ '*', 'gem', 0, [ null, null ], { HP: 0 } ],
-    [ 'A', 'monster A', 1, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'B', 'monster B', 2, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'C', 'monster C', 3, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'D', 'monster D', 4, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'E', 'monster E', 5, [ null, null ], { HP: Math.floor(Math.random() * 100) } ]
-  ];
+
 };
 
 GotandaDiamondMine.STATE_TITLE       = 'title';
@@ -48,7 +37,7 @@ if (typeof module === "object" && module) {
 // Common Definitions
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.CLASSES = [
-  { HP: 20, STR: 3, deckTemplate: '||//' }
+  { HP: 2, STR: 3, deckTemplate: '||//' }
 ];
 
 GotandaDiamondMine.ITEMS = [
@@ -82,7 +71,8 @@ GotandaDiamondMine.prototype.changeState = function (state) {
     this.selectedItem = -1;
 
   } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) { // TOWN MINE
-    //
+    this.createMineChoices();
+    this.selectedMine = -1;
 
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) { // CHOOSE ITEM
     this.createItemsOnHand();
@@ -194,26 +184,30 @@ GotandaDiamondMine.colorScreen = function (arr, color, mode, from_x, to_x) {
 GotandaDiamondMine.prototype.point = function (x, y) {
   //console.log('point:', x, y); // for debug
   var state = this.state;
-  if (state === GotandaDiamondMine.STATE_TITLE) { // TITLE
+  if (state === GotandaDiamondMine.STATE_TITLE) {
     return this.pointTitle(x, y);
-  } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) { // CHOOSE HERO
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) {
     return this.pointChooseHero(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) { // TOWN ITEMS
+  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
     return this.pointTownItems(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) { // TOWN SHOP
+  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     return this.pointTownShop(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) { // TOWN MINE
+  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
     return this.pointTownMine(x, y);
-  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) { // CHOOSE ITEM
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     return this.pointChooseItem(x, y);
-  } else if (state === GotandaDiamondMine.STATE_PLACE) { // PLACE ITEM
+  } else if (state === GotandaDiamondMine.STATE_PLACE) {
     return this.pointPlace(x, y);
-  } else if (state === GotandaDiamondMine.STATE_CONFIRM) { // CONFIRM NEXT WAVE
+  } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
     return this.pointConfirm(x, y);
-  } else if (state === GotandaDiamondMine.STATE_UPGRADE) { // UPGRADE ITEM
+  } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
     return this.pointUpgrade(x, y);
-  } else if (state === GotandaDiamondMine.STATE_ANIMATION) { // WAVE ANIMATION
+  } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
     return this.pointAnimation(x, y);
+  } else if (state === GotandaDiamondMine.STATE_DEFEATED) {
+    return this.pointDefeated(x, y);
+  } else if (state === GotandaDiamondMine.STATE_VICTORY) {
+    return this.pointVictory(x, y);
   }
 };
 
@@ -292,6 +286,38 @@ GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
   } else if (18 <= x && x <= 26 && 0 <= y && y <= 2) { // Town Mine
     this.changeState(GotandaDiamondMine.STATE_TOWN_MINE);
     return true;
+  } else if (0 <= x && x <= 26 && 3 <= y && y <= 8 && 1 <= this.mineChoices.length) { // Mine 1
+    this.selectedMine = 0;
+    return true;
+  } else if (0 <= x && x <= 26 && 9 <= y && y <= 14 && 2 <= this.mineChoices.length) { // Mine 2
+    this.selectedMine = 1;
+    return true;
+  } else if (0 <= x && x <= 26 && 15 <= y && y <= 20 && 3 <= this.mineChoices.length) { // Mine 3
+    this.selectedMine = 2;
+    return true;
+  } else if (0 <= x && x <= 26 && 21 <= y && y <= 26 && 4 <= this.mineChoices.length) { // Mine 4
+    this.selectedMine = 3;
+    return true;
+  } else if (0 <= x && x <= 26 && 27 <= y && y <= 32 && 5 <= this.mineChoices.length) { // Mine 5
+    this.selectedMine = 4;
+    return true;
+  } else if (0 <= x && x <= 26 && 33 <= y && y <= 38 && 6 <= this.mineChoices.length) { // Mine 6
+    this.selectedMine = 4;
+    return true;
+  } else if (0 <= x && x <= 26 && 39 <= y && y <= 44 && 7 <= this.mineChoices.length) { // Mine 7
+    this.selectedMine = 4;
+    return true;
+  } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Choose a hero
+    if (this.selectedMine !== -1) {
+      var selected_mine = this.mineChoices[this.selectedMine];
+      this.createMap(); // mapSymbol, mapColor, points, path are created
+      this.createWaves(selected_mine); // wave, waves are created
+      this.itemsOnMap = [];
+      this.itemsOnHand = [];
+      this.itemsInDeck = [];
+      this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+      return true;
+    }
   }
 };
 
@@ -470,6 +496,19 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
   return true;
 };
 
+GotandaDiamondMine.prototype.pointDefeated = function (x, y) {
+  if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // You died
+    this.changeState(GotandaDiamondMine.STATE_TITLE);
+    return true;
+  }
+};
+
+GotandaDiamondMine.prototype.pointVictory = function (x, y) {
+  if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Back to the town
+    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
+    return true;
+  }
+};
 ////////////////////////////////////////////////////////////////////////////////
 // Procedural create Methods
 ////////////////////////////////////////////////////////////////////////////////
@@ -537,8 +576,24 @@ GotandaDiamondMine.prototype.createMap = function () {
   this.calculatePath();
 };
 
+GotandaDiamondMine.prototype.createWaves = function () {
+  this.wave = 0;
+  this.waves = [
+    [ '*', 'gem', 0, [ null, null ], { HP: 0 } ],
+    [ 'A', 'monster A', 1, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
+    [ 'B', 'monster B', 2, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
+    [ 'C', 'monster C', 3, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
+    [ 'D', 'monster D', 4, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
+    [ 'E', 'monster E', 5, [ null, null ], { HP: Math.floor(Math.random() * 100) } ]
+  ];
+};
+
 GotandaDiamondMine.prototype.createHeroChoices = function () {
   this.heroChoices = GotandaDiamondMine.CLASSES.concat(); // TODO
+};
+
+GotandaDiamondMine.prototype.createMineChoices = function () {
+  this.mineChoices = [ { name: 'ABC', level: 'easy' } ]; // TODO
 };
 
 GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
@@ -637,7 +692,7 @@ GotandaDiamondMine.prototype.getStatus = function () {
   for (var key in status) {
     info_str += status[key] + key + ' ';
   }
-  return [ (info_str + this.itemsOnHand.length + '+' + this.itemsInDeck.length + 'Items                           ').split("") ];
+  return GotandaDiamondMine.colorScreen([ (info_str + this.itemsOnHand.length + '+' + this.itemsInDeck.length + 'Items                           ').split("") ], 'gray');
 };
 
 GotandaDiamondMine.toItemInfoString = function (item) {
@@ -648,12 +703,14 @@ GotandaDiamondMine.toItemInfoString = function (item) {
   return info_str + '                           ';
 };
 
-GotandaDiamondMine.prototype.getItemInfo = function (in_town) {
+GotandaDiamondMine.prototype.getItemInfo = function () {
   var state = this.state;
   var info = [];
   var indexes = this.indexesToPoint = []; // using to point
-  var items_to_display = in_town ? this.itemsInOriginalDeck : this.itemsOnMap;
-  var display_num = in_town ? 33 : 11;
+  var items_to_display = (state === GotandaDiamondMine.STATE_TOWN_ITEMS
+    ? this.itemsInOriginalDeck
+    : state === GotandaDiamondMine.STATE_TOWN_SHOP ? this.itemsInShop : this.itemsOnMap);
+  var display_num = state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP ? 33 : 11;
   for (var i = 0; i < display_num; ++i) { 
     var index = Math.min(items_to_display.length > display_num ? items_to_display.length - display_num + i : i);
     if (state === GotandaDiamondMine.STATE_PLACE) {
@@ -666,7 +723,7 @@ GotandaDiamondMine.prototype.getItemInfo = function (in_town) {
     indexes.push(items_to_display.length <= index ? -1 : index);
   }
 
-  if (state !== GotandaDiamondMine.STATE_PLACE && state !== GotandaDiamondMine.STATE_TOWN_ITEMS) {
+  if (state !== GotandaDiamondMine.STATE_PLACE) {
     info = GotandaDiamondMine.colorScreen(info, 'gray');
   }
   return info;
@@ -731,7 +788,7 @@ GotandaDiamondMine.prototype.getButton = function () {
       "+-------------------------+".split(''),
       "|      Choose a mine      |".split(''),
       "+-------------------------+".split('')
-    ], this.selectedItem === -1 ? 'gray' : 'white');
+    ], this.selectedMine === -1 ? 'gray' : 'white');
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     return GotandaDiamondMine.colorScreen([
       "+-------------------------+".split(''),
@@ -741,7 +798,7 @@ GotandaDiamondMine.prototype.getButton = function () {
   } else if (state === GotandaDiamondMine.STATE_PLACE) {
     return GotandaDiamondMine.colorScreen([
       "+-------------------------+".split(''),
-      "|     Choose a place      |".split(''),
+      this.placeBlocked ? "|        Blocking!         |".split('') : "|     Choose a place      |".split(''),
       "+-------------------------+".split('')
     ], this.selectedPlace ? 'white' : 'gray');
   } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
@@ -871,6 +928,15 @@ GotandaDiamondMine.EMPTY_BOX = [
   [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
 ];
 
+GotandaDiamondMine.EMPTY_MINE_BOX = [
+  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
+];
+
 GotandaDiamondMine.EMPTY_LINED_BOX = [
   ["+","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","+"],
   ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
@@ -913,23 +979,23 @@ GotandaDiamondMine.prototype.getScreenToChooseHero = function () {
 GotandaDiamondMine.prototype.getTownTab = function () {
   var state = this.state;
   if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    return [
-      "+-------++-------++-------+".split(''),
-      "| Items || Shop  || Mine  |".split(''),
-      "+       +------------------".split('')
-    ];
+    return GotandaDiamondMine.colorScreen([
+      "         +-------++-------+".split(''),
+      "  Items  | Shop  || Mine  |".split(''),
+      "         +-------++-------+".split('')
+    ], 'gray', 'x', 0, 8);
   } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    return [
-      "+-------++-------++-------+".split(''),
-      "| Items || Shop  || Mine  |".split(''),
-      "---------+       +---------".split('')
-    ];
+    return GotandaDiamondMine.colorScreen([
+      "+-------+         +-------+".split(''),
+      "| Items |  Shop   | Mine  |".split(''),
+      "--------+         +-------+".split('')
+    ], 'gray', 'x', 9, 17);
   } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return [
-      "+-------++-------++-------+".split(''),
-      "| Items || Shop  || Mine  |".split(''),
-      "------------------+       +".split('')
-    ];
+    return GotandaDiamondMine.colorScreen([
+      "+-------++-------+         ".split(''),
+      "| Items || Shop  |  Mine   ".split(''),
+      "--------++-------+         ".split('')
+    ], 'gray', 'x', 18, 26);
   }
 };
 
@@ -941,8 +1007,30 @@ GotandaDiamondMine.prototype.getScreenAtTownShop = function () {
   return [].concat(this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getItemInfo(true), this.getButton());
 };
 
+GotandaDiamondMine.getDetailMineInfo = function (mine_info) { // 27 x 6
+  var output = [ "+-------------------------+".split("") ];
+  var i = 0;
+  for (var key in mine_info ) {
+    output.push( ("|" + mine_info[key] + " " + key + "                           ").split("") );
+    ++i;
+  }
+  for (i; i < 4; ++i) {
+    output.push("|                         |".split(""));
+  }
+  for (var i = 1; i <= 4; ++i) {
+    output[i][26] = '|';
+  }
+  output.push("+-------------------------+".split(""));
+  return output;
+};
+
 GotandaDiamondMine.prototype.getScreenAtTownMine = function () {
-  return [].concat(this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getItemInfo(true), this.getButton());
+  var mines = [];
+  for (var i = 0; i < 7; ++i) {
+    var display_mine = this.mineChoices[i] ? GotandaDiamondMine.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_MINE_BOX;
+    mines = mines.concat(i === this.selectedMine ? display_mine : GotandaDiamondMine.colorScreen(display_mine, 'gray'));
+  }
+  return [].concat(this.getTownTab(), mines, this.getButton());
 };
 
 GotandaDiamondMine.getDetailItemInfo = function (item) { // 27 x 9
