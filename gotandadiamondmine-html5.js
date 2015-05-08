@@ -14,7 +14,7 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
   this.canvasElement.addEventListener('touchstart', function (e) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
-    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
+    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top, 'start');
     if (gdm.point(point[0], point[1])) {
       if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
@@ -27,7 +27,7 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
   this.canvasElement.addEventListener('touchmove', function (e) {
     e.preventDefault();
     var rect = e.target.getBoundingClientRect();
-    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
+    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top, 'move');
     if (gdm.touchNow[0] === point[0] && gdm.touchNow[1] === point[1]) {
       // nothing
 
@@ -94,8 +94,16 @@ GotandaDiamondMine.prototype.pointHTML = function (x, y) {
   return this.point(mx, my);
 };
 
-GotandaDiamondMine.prototype.getPointFromHTML = function (x, y) {
-  var mx = Math.floor(x / this.fontX), my = Math.floor(y / this.fontY);
+GotandaDiamondMine.prototype.getPointFromHTML = function (x, y, mode) {
+  var px = x, py = y;
+  if (mode === 'start') {
+    this.touchStart = [ x, y ];
+  } else if (mode === 'move' ) { // swiping is 1/2 speed
+    var touch_start = this.touchStart;
+    px = (touch_start[0] + x) / 2;
+    py = (touch_start[1] + y) / 2;
+  }
+  var mx = Math.floor(px / this.fontX), my = Math.floor(py / this.fontY);
   return [ mx, my ];
 };
 
