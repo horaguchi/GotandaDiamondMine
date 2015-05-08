@@ -38,6 +38,7 @@
 /Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/css/index.css \
 /Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/img/8x8.png \
 /Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/img/logo.png \
+/Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/img/misaki_gothic.png \
 /Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/js/gotandadiamondmine-html5.js \
 /Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/js/gotandadiamondmine.browserify.js \
 /Users/horaguchi/GotandaDiamondMine/platforms/android/assets/www/js/index.js \
