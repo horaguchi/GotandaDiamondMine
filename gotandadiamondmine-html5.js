@@ -12,11 +12,11 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
   GotandaDiamondMine.ins = this;
   var gdm = this;
   this.canvasElement.addEventListener('touchstart', function (e) {
-    e.preventDefault();
+    //e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
     if (gdm.point(point[0], point[1])) {
-      if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
       gdm.draw();
@@ -25,14 +25,14 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
   });
 
   this.canvasElement.addEventListener('touchmove', function (e) {
-    e.preventDefault();
+    //e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
     if (gdm.touchNow[0] === point[0] && gdm.touchNow[1] === point[1]) {
       // nothing
 
     } else if (gdm.point(point[0], point[1])) {
-      if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
       gdm.draw();
@@ -41,11 +41,11 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
   });
 
   this.canvasElement.addEventListener('mousedown', function (e) {
-    e.preventDefault();
+    //e.preventDefault();
     var rect = e.target.getBoundingClientRect();
     var point = gdm.getPointFromHTML(e.clientX - rect.left, e.clientY - rect.top);
     if (gdm.point(point[0], point[1])) {
-      if (gdm.state == GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
         gdm.startAnimation();
       }
       gdm.draw();
@@ -64,8 +64,8 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
 };
 
 GotandaDiamondMine.prototype.resizeCanvas = function () {
-  if (this.maxWidth  && this.maxWidth  == window.innerWidth &&
-      this.maxHeight && this.maxHeight == window.innerHeight) {
+  if (this.maxWidth  && this.maxWidth  === window.innerWidth &&
+      this.maxHeight && this.maxHeight === window.innerHeight) {
     return; // nothing to do
   }
 

@@ -34,7 +34,7 @@ public class CordovaApp extends CordovaActivity
         loadUrl(launchUrl);
         // https://sites.google.com/site/heppokobibouroku/puroguramutoka/phonegap-cordova/android/viewportga-xiaokanai
         WebSettings ws = super.appView.getSettings();
-        //ws.setBuiltInZoomControls(true);
+        ws.setBuiltInZoomControls(true);
         ws.setLoadWithOverviewMode(true);
         ws.setUseWideViewPort(true);
         super.appView.setInitialScale(1);
