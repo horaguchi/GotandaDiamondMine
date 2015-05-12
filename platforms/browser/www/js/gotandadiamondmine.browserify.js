@@ -38,20 +38,22 @@ if (typeof module === "object" && module) {
 // Common Definitions
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.CLASSES = [
-  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||//%"' }
+  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||//' }
 ];
 
 GotandaDiamondMine.ITEMS = [
-  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '|+0' } ],
-  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '|+0' } ],
-  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '|+0' } ],
-  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '|+0' } ],
-  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '/+0' } ],
-  [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '/+0' } ],
-  [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '/+0' } ],
-  [ '/', 'a pole axe', 4, [ null, null ], { 'Physical Damage': '15d8', 'Upgrade': '/+0' } ],
-  [ '%', 'an apple', 1, [ null, null ], { 'Energy': '15', 'Upgrade': '%+0' } ],
-  [ '"', 'an amulet of damage', 1, [ null, null ], { 'Physical Damage Buff': '1.5', 'Upgrade': '%+0' } ]
+  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0|' } ],
+  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0|' } ],
+  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0|' } ],
+  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0|' } ],
+  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '+0/' } ],
+  [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '+0/' } ],
+  [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '+0/' } ],
+  [ '/', 'a pole axe', 4, [ null, null ], { 'Physical Damage': '15d8', 'Upgrade': '+0/' } ],
+  [ '%', 'an apple', 1, [ null, null ], { 'Energy': '(15)', 'Upgrade': '+0%' } ],
+  [ '"', 'an amulet of damage', 1, [ null, null ], { 'Physical Damage Buff': '1.5', 'Upgrade': '+0%' } ],
+  [ '[', 'a ring armour', 1, [ null, null ], { 'Armor Class': '+10', '\ Luck Bonus': '+25', 'Upgrade': '+0[' } ],
+  [ '`', 'a rock', 1, [ null, null ], { 'Upgrade': '+0`' } ]
 ];
 
 GotandaDiamondMine.ITEMS_MAP = (function (items) { // ex. { 'a dagger': [ undefined, 0, 1, 2 ], ... }
@@ -81,7 +83,8 @@ GotandaDiamondMine.ITEM_ABBR = {
   'Lightning Resistance': 'LR',
   'Poison Resistance': 'PR',
   'Physical Damage Buff': 'PDB',
-  'Energy': '%'
+  'Energy': '%',
+  '\ Luck Bonus': '%LB'
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,6 +150,7 @@ GotandaDiamondMine.prototype.changeState = function (state) {
 
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) { // UPGRADE ITEM
     this.sacrificingItem = -1;
+    this.canSacrifice = false;
 
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) { // WAVE ANIMATION
     this.itemsWait = [];
@@ -509,11 +513,23 @@ GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
   } else if (0 <= x && x <= 26 && 34 <= y && y <= 44) { // Item list 
     return this.pointUpgradeItem(this.indexesToPoint[y - 34]);
 
-  } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Combine
-    if (this.canSacrifice) {
+  } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Replace or Combine
+    if (this.sacrificingItem === -1) { // Replace
+      // delete confirming item
+      var before_con_pos = this.itemsOnMap[this.confirmingItem][3];
+      this.mapSymbol[before_con_pos[1]][before_con_pos[0]] = '.';
+      this.mapColor[before_con_pos[1]][before_con_pos[0]] = 'gray';
+      var item = this.itemsOnMap.splice(this.confirmingItem, 1)[0];
+      item[3] = [null, null];
+      this.itemsOnMap.push(item);
+      this.calculatePath();
+      this.changeState(GotandaDiamondMine.STATE_PLACE);
+      return true;
+
+    } else if (this.canSacrifice) { // Combine
       // level up confirming item
       var confirming_item = this.itemsOnMap[this.confirmingItem];
-      var next_item = GotandaDiamondMine.ITEMS[GotandaDiamondMine.ITEMS_MAP[confirming_item[1]][confirming_item[2] + 1]];
+      var next_item = GotandaDiamondMine.ITEMS[GotandaDiamondMine.ITEMS_MAP[confirming_item[1]][confirming_item[2] + 1]].concat();
       confirming_item[2] = next_item[2]; // level
       confirming_item[4] = next_item[4]; // status
       this.mapColor[confirming_item[3][1]][confirming_item[3][0]] = '';
@@ -521,11 +537,11 @@ GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
 
       // delete sacrificed item
       var before_sac_pos = this.itemsOnMap[this.sacrificingItem][3];
-      this.mapSymbol[before_sac_pos[1]][before_sac_pos[0]] = '.';
-      this.mapColor[before_sac_pos[1]][before_sac_pos[0]] = 'gray';
-      this.itemsOnMap.splice(this.sacrificingItem, 1);
+      this.mapSymbol[before_sac_pos[1]][before_sac_pos[0]] = '`';
+      this.mapColor[before_sac_pos[1]][before_sac_pos[0]] = '';
+      this.itemsOnMap.splice(this.sacrificingItem, 1, GotandaDiamondMine.ITEMS[GotandaDiamondMine.ITEMS_MAP['a rock'][1]].concat());
+      this.itemsOnMap[this.sacrificingItem][3] = before_sac_pos;
       this.sacrificingItem = -1;
-      this.canSacrifice = false;
       this.calculatePath();
 
       this.status['%'] -= Math.pow(2, confirming_item[2]); // L1: 2, L2: 4, L3: 8, ...
@@ -562,17 +578,17 @@ GotandaDiamondMine.prototype.pointUpgradeItem = function (pointed_item) {
   return true;
 };
 
-GotandaDiamondMine.REGEXP_UPGRADE = /^(.)([-+])(\d)$/;
+GotandaDiamondMine.REGEXP_UPGRADE = /^([-+])(\d)(.)$/;
 GotandaDiamondMine.prototype.checkSacrifice = function (confirming_item, sacrificing_item) {
   var upgrade = confirming_item[4]['Upgrade'];
   if (!upgrade) {
     return false;
   }
-  var matches = upgrade.match(GotandaDiamondMine.REGEXP_UPGRADE); // ex. (?)(+)(1)
-  if (sacrificing_item[0] !== matches[1]) {
+  var matches = upgrade.match(GotandaDiamondMine.REGEXP_UPGRADE); // ex. (+)(1)(?)
+  if (sacrificing_item[0] !== matches[3]) {
     return false;
   }
-  var target_level = Math.max(confirming_item[2] + Math.floor(matches[2] === '+' ? matches[3] : -1 * matches[3]), 1);
+  var target_level = Math.max(confirming_item[2] + Math.floor(matches[1] === '+' ? matches[2] : -1 * matches[2]), 1);
   if (sacrificing_item[2] < target_level) {
     return false;
   }
@@ -941,11 +957,19 @@ GotandaDiamondMine.prototype.getButton = function () {
       ];
     }
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|     Combine a item      |".split(''),
-      "+-------------------------+".split('')
-    ], this.canSacrifice ? 'white' : 'gray');
+    if (this.sacrificingItem === -1) {
+      return [
+        "+-------------------------+".split(''),
+        "|     Replace a item      |".split(''),
+        "+-------------------------+".split('')
+      ];
+    } else {
+      return GotandaDiamondMine.colorScreen([
+        "+-------------------------+".split(''),
+        "|     Combine a item      |".split(''),
+        "+-------------------------+".split('')
+      ], this.canSacrifice ? 'white' : 'gray');
+    }
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
     return GotandaDiamondMine.colorScreen([
       "+-------------------------+".split(''),
