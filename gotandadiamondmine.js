@@ -408,6 +408,7 @@ GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
       this.itemsOnMap = [];
       this.itemsOnHand = [];
       this.itemsInDeck = [];
+      this.createItemsOnHand(true);
       this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       return true;
     }
@@ -592,8 +593,10 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
         this.changeState(GotandaDiamondMine.STATE_DEFEATED);
       } else if (this.wave === this.waves.length) {
         this.changeState(GotandaDiamondMine.STATE_VICTORY);
-      } else {
+      } else if (0 < this.itemsOnHand.length) {
         this.changeState(GotandaDiamondMine.STATE_CHOOSE_ITEM);
+      } else {
+        this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       }
       return true;
     } else {
@@ -742,8 +745,8 @@ GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
   this.itemsInOriginalDeck = deck;
 };
 
-GotandaDiamondMine.prototype.createItemsOnHand = function () {
-  if (this.itemsOnHand.length === 0 && this.itemsInDeck.length === 0) { // reset deck
+GotandaDiamondMine.prototype.createItemsOnHand = function (reset_ok) {
+  if (reset_ok && this.itemsOnHand.length === 0 && this.itemsInDeck.length === 0) { // reset deck
     this.itemsInDeck = this.chance.shuffle(this.itemsInOriginalDeck);
   }
   if (this.itemsOnHand.length !== 3 && this.itemsInDeck.length !== 0) { // draw deck
