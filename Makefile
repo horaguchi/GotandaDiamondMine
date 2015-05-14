@@ -1,6 +1,10 @@
 browser-run: gotandadiamondmine.browserify.js
 	cordova run browser
 
+push:
+	git commit -a -m 'Commit for build'
+	git push origin master
+
 android: gotandadiamondmine.browserify.js
 	cordova build android
 
