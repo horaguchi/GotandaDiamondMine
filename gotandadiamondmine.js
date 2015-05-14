@@ -42,10 +42,14 @@ GotandaDiamondMine.CLASSES = [
 
 // [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
-  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0|' }, null ],
-  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0|' }, null ],
-  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0|' }, null ],
-  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0%' }, null ],
+  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0%' }, null ],
+  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0%' }, null ],
+  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0%' }, null ],
+  [ '|', 'a sword', 1, [ null, null ], { 'Physical Damage': '1d6', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a sword', 2, [ null, null ], { 'Physical Damage': '2d6', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a sword', 3, [ null, null ], { 'Physical Damage': '5d6', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a sword', 4, [ null, null ], { 'Physical Damage': '15d6', 'Upgrade': '+0|' }, null ],
   [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '+0/' }, null ],
   [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '+0/' }, null ],
   [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '+0/' }, null ],
@@ -581,7 +585,12 @@ GotandaDiamondMine.prototype.pointConfirm = function (x, y) {
     return this.pointConfirmItem(this.indexesToPoint[y - 34]);
 
   } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Next Wave
-    this.changeState(GotandaDiamondMine.STATE_ANIMATION);
+    this.status['%'] -= this.wave === 0 ? 0 : 1;
+    if (0 < this.status['%']) {
+      this.changeState(GotandaDiamondMine.STATE_ANIMATION);
+    } else {
+      this.changeState(GotandaDiamondMine.STATE_DEFEATED);
+    }
     return true;
   }
 };
@@ -839,11 +848,11 @@ GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
   var deck = [];
   var symbol;
   var check_symbol = function (item) {
-    return item[0] === symbol;
+    return item[0] === symbol && item[2] === 1; // Level 1
   };
   for (var i = 0; i < array.length; ++i) {
     symbol = array[i];
-    deck.push(GotandaDiamondMine.ITEMS.filter(check_symbol)[0]);
+    deck.push(this.chance.shuffle(GotandaDiamondMine.ITEMS.filter(check_symbol))[0]);
   }
   this.itemsInOriginalDeck = deck;
 };
