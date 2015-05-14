@@ -37,22 +37,23 @@ if (typeof module === "object" && module) {
 // Common Definitions
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.CLASSES = [
-  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||//' }
+  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||//%%' }
 ];
 
+// [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
-  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0|' } ],
-  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0|' } ],
-  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0|' } ],
-  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0|' } ],
-  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '+0/' } ],
-  [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '+0/' } ],
-  [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '+0/' } ],
-  [ '/', 'a pole axe', 4, [ null, null ], { 'Physical Damage': '15d8', 'Upgrade': '+0/' } ],
-  [ '%', 'an apple', 1, [ null, null ], { 'Energy': '(15)', 'Upgrade': '+0%' } ],
-  [ '"', 'an amulet of damage', 1, [ null, null ], { 'Physical Damage Buff': '1.5', 'Upgrade': '+0%' } ],
-  [ '[', 'a ring armour', 1, [ null, null ], { 'Armor Class': '+10', '\ Luck Bonus': '+25', 'Upgrade': '+0[' } ],
-  [ '`', 'a rock', 1, [ null, null ], { 'Upgrade': '+0`' } ]
+  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0|' }, null ],
+  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '+0/' }, null ],
+  [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '+0/' }, null ],
+  [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '+0/' }, null ],
+  [ '/', 'a pole axe', 4, [ null, null ], { 'Physical Damage': '15d8', 'Upgrade': '+0/' }, null ],
+  [ '%', 'an apple', 1, [ null, null ], { 'Energy': '^15', 'Upgrade': '+0%' }, null ],
+  [ '"', 'an amulet of damage', 1, [ null, null ], { 'Physical Damage Buff': '1.5', 'Upgrade': '+0%' }, null ],
+  [ '[', 'a ring armour', 1, [ null, null ], { 'Armor Class': '+10', '\ Luck Bonus': '+25', 'Upgrade': '+0[' }, null ],
+  [ '`', 'a rock', 1, [ null, null ], { 'Upgrade': '+0`' }, null ]
 ];
 
 GotandaDiamondMine.ITEMS_MAP = (function (items) { // ex. { 'a dagger': [ undefined, 0, 1, 2 ], ... }
@@ -89,7 +90,7 @@ GotandaDiamondMine.ITEM_ABBR = {
 ////////////////////////////////////////////////////////////////////////////////
 // Common Methods
 ////////////////////////////////////////////////////////////////////////////////
-GotandaDiamondMine.REGEXP_DICE = /^(\d+)?(d\d+)?$/;
+GotandaDiamondMine.REGEXP_DICE = /^([-+^])?(\d+)?(d\d+)?$/;
 GotandaDiamondMine.prototype.roll = function (param) {
   if (typeof param === "number") {
     return param;
@@ -97,20 +98,20 @@ GotandaDiamondMine.prototype.roll = function (param) {
     return 0; // invalid param
   }
   var sum = 0;
-  var values = param.split(/\+/); // ex. 2d6+2d12
+  var values = param.split(/\+/); // ex. 2d6 + 2d12
   for (var i = 0, l = values.length; i < l; ++i) {
     var value = values[i];
     var matches = value.match(GotandaDiamondMine.REGEXP_DICE);
     // ex. 20
-    if (matches[1] && !matches[2]) {
-      sum += Math.floor(matches[1]);
+    if (matches[2] && !matches[3]) {
+      sum += Math.floor(matches[2]);
 
     // ex. d20
-    } else if (!matches[1] && matches[2]) {
+    } else if (!matches[2] && matches[3]) {
       sum += this.chance.rpg('1' + value, { sum: true });
 
     // ex. 2d20
-    } else if (matches[1] && matches[2]) {
+    } else if (matches[2] && matches[3]) {
       sum += this.chance.rpg(value, { sum: true });
     }
   }
@@ -470,6 +471,7 @@ GotandaDiamondMine.prototype.pointPlace = function (x, y) {
   } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // OK
     if (this.selectedPlace) { // OK
       this.itemsOnMap[this.placingItem][3] = this.selectedPlace;
+      this.addItemToMap(this.itemsOnMap[this.placingItem]);
       ++this.placingItem;
       if (this.placingItem === this.itemsOnMap.length) {
         this.changeState(GotandaDiamondMine.STATE_CONFIRM);
@@ -515,6 +517,7 @@ GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
   } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Replace or Combine
     if (this.sacrificingItem === -1) { // Replace
       // delete confirming item
+      this.removeItemFromMap(this.itemsOnMap[this.confirmingItem]);
       var before_con_pos = this.itemsOnMap[this.confirmingItem][3];
       this.mapSymbol[before_con_pos[1]][before_con_pos[0]] = '.';
       this.mapColor[before_con_pos[1]][before_con_pos[0]] = 'gray';
@@ -528,13 +531,16 @@ GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
     } else if (this.canSacrifice) { // Combine
       // level up confirming item
       var confirming_item = this.itemsOnMap[this.confirmingItem];
+      this.removeItemFromMap(confirming_item);
       var next_item = GotandaDiamondMine.ITEMS[GotandaDiamondMine.ITEMS_MAP[confirming_item[1]][confirming_item[2] + 1]].concat();
       confirming_item[2] = next_item[2]; // level
       confirming_item[4] = next_item[4]; // status
       this.mapColor[confirming_item[3][1]][confirming_item[3][0]] = '';
+      this.addItemToMap(confirming_item);
       this.confirmingItem = -1;
 
       // delete sacrificed item
+      this.removeItemFromMap(this.itemsOnMap[this.sacrificingItem]);
       var before_sac_pos = this.itemsOnMap[this.sacrificingItem][3];
       this.mapSymbol[before_sac_pos[1]][before_sac_pos[0]] = '`';
       this.mapColor[before_sac_pos[1]][before_sac_pos[0]] = '';
@@ -636,17 +642,33 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
 GotandaDiamondMine.prototype.actionItem = function (item, wave) {
   var item_x = item[3][0], item_y = item[3][1];
   var wave_x = wave[3][0], wave_y = wave[3][1];
-  var item_status = item[4];
-  var wave_status = wave[4];
-  var speed = item_status.speed || 4;
+  var item_param = item[4];
+  var wave_param = wave[4];
+  var speed = item_param['Speed'] || 4;
   if (Math.abs(wave_x - item_x) < 2 && Math.abs(wave_y - item_y) < 2) {
-    if (item_status['Physical Damage']) {
-      wave_status.HP -= this.roll(item_status['Physical Damage']) - (wave_status.AC || 0);
+    if (item_param['Physical Damage']) {
+      wave_param['HP'] -= this.roll(item_param['Physical Damage']) - (wave_param['AC'] || 0);
     }
     return speed;
   } else { // no-attack, wait
     return 1;
   } 
+};
+
+GotandaDiamondMine.prototype.addItemToMap = function (item) {
+  if (!item[5]) {
+    item[5] = {};
+  }
+  var item_param = item[4];
+  var item_status = item[5];
+  if (item_param['Energy'] && !item_status['Added']) {
+    this.status['%'] = Math.min(this.status['%'] + this.roll(item_param['Energy']), 100);
+  }
+  item_status['Added'] = true;
+};
+
+GotandaDiamondMine.prototype.removeItemFromMap = function (item) {
+  
 };
 
 GotandaDiamondMine.prototype.pointDefeated = function (x, y) {
@@ -771,7 +793,6 @@ GotandaDiamondMine.prototype.createItemsOnHand = function (reset_ok) {
     }
   }
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Game Display Methods
