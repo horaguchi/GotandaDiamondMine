@@ -38,25 +38,148 @@ if (typeof module === "object" && module) {
 // Common Definitions
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.CLASSES = [
-  { HP: 2, STR: 3, deckTemplate: '||//', '*': 0 }
+  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||//%%' }
 ];
 
+// [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
-  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4' } ],
-  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '2d6' } ]
+  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0|' }, null ],
+  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0|' }, null ],
+  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '+0/' }, null ],
+  [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '+0/' }, null ],
+  [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '+0/' }, null ],
+  [ '/', 'a pole axe', 4, [ null, null ], { 'Physical Damage': '15d8', 'Upgrade': '+0/' }, null ],
+  [ '%', 'an apple', 1, [ null, null ], { 'Energy': '^15', 'Upgrade': '+0%' }, null ],
+  [ '"', 'an amulet of damage', 1, [ null, null ], { 'Physical Damage Buff': '1.5', 'Upgrade': '+0%' }, null ],
+  [ '[', 'a ring armour', 1, [ null, null ], { 'Armor Class': '+10', '\ Luck Bonus': '+25', 'Upgrade': '+0[' }, null ],
+  [ '`', 'a rock', 1, [ null, null ], { 'Upgrade': '+0`' }, null ]
 ];
+
+GotandaDiamondMine.ITEMS_MAP = (function (items) { // ex. { 'a dagger': [ undefined, 0, 1, 2 ], ... }
+  var result = {};
+  for (var i = 0; i < items.length; ++i) {
+    var item = items[i];
+    result[item[1]] = result[item[1]] || [];
+    result[item[1]][item[2]] = i;
+  }
+  return result;
+})(GotandaDiamondMine.ITEMS);
 
 GotandaDiamondMine.ITEM_ABBR = {
   '|': 'An edged weapon',
   '\\': 'A hafted weapon',
   '/': 'A pole weapon',
-  'Physical Damage': 'Phys',
-  'Lightning Damage': 'Light'
+  'Upgrade': 'UG',
+  'Physical Damage': 'PD',
+  'Fire Damage': 'FD',
+  'Cold Damage': 'CD',
+  'Lightning Damage': 'LD',
+  'Poison Damage': 'PD',
+  'Armor Class': 'AC',
+  'All Resistance': 'AR',
+  'Fire Resistance': 'FR',
+  'Cold Resistance': 'CR',
+  'Lightning Resistance': 'LR',
+  'Poison Resistance': 'PR',
+  'Physical Damage Buff': 'PDB',
+  'Energy': '%',
+  '\ Luck Bonus': '%LB'
+};
+
+GotandaDiamondMine.MAPS = {
+  'Flats': [
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split(''),
+    "...........................".split('')
+  ],
+  'Paddy': [
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "   .....................   ".split(''),
+    "   .....................   ".split(''),
+    "   .....................   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   .....................   ".split(''),
+    "   .....................   ".split(''),
+    "   .....................   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   ...      ...      ...   ".split(''),
+    "   .....................   ".split(''),
+    "   .....................   ".split(''),
+    "   .....................   ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split('')
+  ]
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // Common Methods
 ////////////////////////////////////////////////////////////////////////////////
+GotandaDiamondMine.REGEXP_DICE = /^([-+^])?(\d+)?(d\d+)?$/;
+GotandaDiamondMine.prototype.roll = function (param) {
+  if (typeof param === "number") {
+    return param;
+  } else if (typeof param !== "string") {
+    return 0; // invalid param
+  }
+  var sum = 0;
+  var values = param.split(/\+/); // ex. 2d6 + 2d12
+  for (var i = 0, l = values.length; i < l; ++i) {
+    var value = values[i];
+    var matches = value.match(GotandaDiamondMine.REGEXP_DICE);
+    // ex. 20
+    if (matches[2] && !matches[3]) {
+      sum += Math.floor(matches[2]);
+
+    // ex. d20
+    } else if (!matches[2] && matches[3]) {
+      sum += this.chance.rpg('1' + value, { sum: true });
+
+    // ex. 2d20
+    } else if (matches[2] && matches[3]) {
+      sum += this.chance.rpg(value, { sum: true });
+    }
+  }
+  return sum;
+};
+
 GotandaDiamondMine.prototype.changeState = function (state) {
   if (state === GotandaDiamondMine.STATE_TITLE) { // TITLE
     //
@@ -89,6 +212,7 @@ GotandaDiamondMine.prototype.changeState = function (state) {
 
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) { // UPGRADE ITEM
     this.sacrificingItem = -1;
+    this.canSacrifice = false;
 
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) { // WAVE ANIMATION
     this.itemsWait = [];
@@ -346,11 +470,12 @@ GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
   } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Choose a hero
     if (this.selectedMine !== -1) {
       var selected_mine = this.mineChoices[this.selectedMine];
-      this.createMap(); // mapSymbol, mapColor, points, path are created
+      this.createMap(selected_mine); // mapSymbol, mapColor, points, path are created
       this.createWaves(selected_mine); // wave, waves are created
       this.itemsOnMap = [];
       this.itemsOnHand = [];
       this.itemsInDeck = [];
+      this.createItemsOnHand(true);
       this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       return true;
     }
@@ -371,7 +496,12 @@ GotandaDiamondMine.prototype.pointChooseItem = function (x, y) {
     if (this.selectedItem !== -1) {
       this.itemsOnMap.push(this.itemsOnHand[this.selectedItem].concat());
       this.itemsOnHand.splice(this.selectedItem, 1);
-      this.changeState(GotandaDiamondMine.STATE_PLACE);
+      this.status['%'] -= Math.pow(2, this.itemsOnMap[this.itemsOnMap.length - 1][2]); // L1: 2, L2: 4, L3: 8, ...
+      if (0 < this.status['%']) {
+        this.changeState(GotandaDiamondMine.STATE_PLACE);
+      } else {
+        this.changeState(GotandaDiamondMine.STATE_DEFEATED);
+      }
       return true;
     }
   }
@@ -403,6 +533,7 @@ GotandaDiamondMine.prototype.pointPlace = function (x, y) {
   } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // OK
     if (this.selectedPlace) { // OK
       this.itemsOnMap[this.placingItem][3] = this.selectedPlace;
+      this.addItemToMap(this.itemsOnMap[this.placingItem]);
       ++this.placingItem;
       if (this.placingItem === this.itemsOnMap.length) {
         this.changeState(GotandaDiamondMine.STATE_CONFIRM);
@@ -445,10 +576,49 @@ GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
   } else if (0 <= x && x <= 26 && 34 <= y && y <= 44) { // Item list 
     return this.pointUpgradeItem(this.indexesToPoint[y - 34]);
 
-  } else if (0 <= x && x <= 12 && 45 <= y && y <= 47) { // Combine
+  } else if (0 <= x && x <= 26 && 45 <= y && y <= 47) { // Replace or Combine
+    if (this.sacrificingItem === -1) { // Replace
+      // delete confirming item
+      this.removeItemFromMap(this.itemsOnMap[this.confirmingItem]);
+      var before_con_pos = this.itemsOnMap[this.confirmingItem][3];
+      this.mapSymbol[before_con_pos[1]][before_con_pos[0]] = '.';
+      this.mapColor[before_con_pos[1]][before_con_pos[0]] = 'gray';
+      var item = this.itemsOnMap.splice(this.confirmingItem, 1)[0];
+      item[3] = [null, null];
+      this.itemsOnMap.push(item);
+      this.calculatePath();
+      this.changeState(GotandaDiamondMine.STATE_PLACE);
+      return true;
 
-  } else if (14 <= x && x <= 26 && 45 <= y && y <= 47) { // Next Wave
-    //
+    } else if (this.canSacrifice) { // Combine
+      // level up confirming item
+      var confirming_item = this.itemsOnMap[this.confirmingItem];
+      this.removeItemFromMap(confirming_item);
+      var next_item = GotandaDiamondMine.ITEMS[GotandaDiamondMine.ITEMS_MAP[confirming_item[1]][confirming_item[2] + 1]].concat();
+      confirming_item[2] = next_item[2]; // level
+      confirming_item[4] = next_item[4]; // status
+      this.mapColor[confirming_item[3][1]][confirming_item[3][0]] = '';
+      this.addItemToMap(confirming_item);
+      this.confirmingItem = -1;
+
+      // delete sacrificed item
+      this.removeItemFromMap(this.itemsOnMap[this.sacrificingItem]);
+      var before_sac_pos = this.itemsOnMap[this.sacrificingItem][3];
+      this.mapSymbol[before_sac_pos[1]][before_sac_pos[0]] = '`';
+      this.mapColor[before_sac_pos[1]][before_sac_pos[0]] = '';
+      this.itemsOnMap.splice(this.sacrificingItem, 1, GotandaDiamondMine.ITEMS[GotandaDiamondMine.ITEMS_MAP['a rock'][1]].concat());
+      this.itemsOnMap[this.sacrificingItem][3] = before_sac_pos;
+      this.sacrificingItem = -1;
+      this.calculatePath();
+
+      this.status['%'] -= Math.pow(2, confirming_item[2]); // L1: 2, L2: 4, L3: 8, ...
+      if (0 < this.status['%']) {
+        this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+      } else {
+        this.changeState(GotandaDiamondMine.STATE_DEFEATED);
+      }
+      return true;
+    }
   }
 };
 
@@ -464,12 +634,33 @@ GotandaDiamondMine.prototype.pointUpgradeItem = function (pointed_item) {
     var before_con_pos = this.itemsOnMap[this.confirmingItem][3];
     this.mapColor[before_con_pos[1]][before_con_pos[0]] = '';
     this.changeState(GotandaDiamondMine.STATE_CONFIRM);
-  } else if (pointed_item === this.sacrificingItem) {
+  } else if (pointed_item === this.sacrificingItem) { // same item is to cancel sacrificing
     this.sacrificingItem = -1;
   } else {
     var item_pos = this.itemsOnMap[pointed_item][3];
     this.mapColor[item_pos[1]][item_pos[0]] = 'fuchsia';
     this.sacrificingItem = pointed_item;
+    this.canSacrifice = this.checkSacrifice(this.itemsOnMap[this.confirmingItem], this.itemsOnMap[this.sacrificingItem]);
+  }
+  return true;
+};
+
+GotandaDiamondMine.REGEXP_UPGRADE = /^([-+])(\d)(.)$/;
+GotandaDiamondMine.prototype.checkSacrifice = function (confirming_item, sacrificing_item) {
+  var upgrade = confirming_item[4]['Upgrade'];
+  if (!upgrade) {
+    return false;
+  }
+  var matches = upgrade.match(GotandaDiamondMine.REGEXP_UPGRADE); // ex. (+)(1)(?)
+  if (sacrificing_item[0] !== matches[3]) {
+    return false;
+  }
+  var target_level = Math.max(confirming_item[2] + Math.floor(matches[1] === '+' ? matches[2] : -1 * matches[2]), 1);
+  if (sacrificing_item[2] < target_level) {
+    return false;
+  }
+  if (!GotandaDiamondMine.ITEMS_MAP[confirming_item[1]][confirming_item[2] + 1]) {
+    return false;
   }
   return true;
 };
@@ -486,8 +677,10 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
         this.changeState(GotandaDiamondMine.STATE_DEFEATED);
       } else if (this.wave === this.waves.length) {
         this.changeState(GotandaDiamondMine.STATE_VICTORY);
-      } else {
+      } else if (0 < this.itemsOnHand.length) {
         this.changeState(GotandaDiamondMine.STATE_CHOOSE_ITEM);
+      } else {
+        this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       }
       return true;
     } else {
@@ -496,24 +689,48 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
     }
   }
   // items attack
-  var wave_x = this.waves[this.wave][3][0], wave_y = this.waves[this.wave][3][1];
   var items_on_map = this.itemsOnMap;
   var items_wait = this.itemsWait;
   for (var i = 0; i < items_on_map.length; ++i) {
-    var item = items_on_map[i];
-    if (!items_wait[i]) {
-      var item_x = item[3][0], item_y = item[3][1];
-      if (Math.abs(wave_x - item_x) < 2 && Math.abs(wave_y - item_y) < 2) { // attack
-        this.waves[this.wave][4].HP -= 10;
-        items_wait[i] = 4;
-      } else { // no-attack, wait
-        items_wait[i] = 1;
-      }
+    if (!items_wait[i]) { // undefined or 0
+      items_wait[i] += this.actionItem(items_on_map[i], this.waves[this.wave]);
     }
     --items_wait[i];
   }
   --this.waveWait;
   return true;
+};
+
+GotandaDiamondMine.prototype.actionItem = function (item, wave) {
+  var item_x = item[3][0], item_y = item[3][1];
+  var wave_x = wave[3][0], wave_y = wave[3][1];
+  var item_param = item[4];
+  var wave_param = wave[4];
+  var speed = item_param['Speed'] || 4;
+  if (Math.abs(wave_x - item_x) < 2 && Math.abs(wave_y - item_y) < 2) {
+    if (item_param['Physical Damage']) {
+      wave_param['HP'] -= this.roll(item_param['Physical Damage']) - (wave_param['AC'] || 0);
+    }
+    return speed;
+  } else { // no-attack, wait
+    return 1;
+  } 
+};
+
+GotandaDiamondMine.prototype.addItemToMap = function (item) {
+  if (!item[5]) {
+    item[5] = {};
+  }
+  var item_param = item[4];
+  var item_status = item[5];
+  if (item_param['Energy'] && !item_status['Added']) {
+    this.status['%'] = Math.min(this.status['%'] + this.roll(item_param['Energy']), 100);
+  }
+  item_status['Added'] = true;
+};
+
+GotandaDiamondMine.prototype.removeItemFromMap = function (item) {
+  
 };
 
 GotandaDiamondMine.prototype.pointDefeated = function (x, y) {
@@ -532,37 +749,9 @@ GotandaDiamondMine.prototype.pointVictory = function (x, y) {
 ////////////////////////////////////////////////////////////////////////////////
 // Procedural create Methods
 ////////////////////////////////////////////////////////////////////////////////
-GotandaDiamondMine.prototype.createMap = function () {
-  this.mapSymbol = [
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],
-    [".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."]
-  ];
-  this.mapColor = this.mapSymbol.map(function (row) { return row.map(function (value) { return "gray"; }); });
+GotandaDiamondMine.prototype.createMap = function (mine) {
+  this.mapSymbol = GotandaDiamondMine.MAPS[mine['map']].map(function (row) { return row.concat(); });
+  this.mapColor = this.mapSymbol.map(function (row) { return row.map(function (value) { return value === ' ' ? '' : "gray"; }); });
 
   var points_num = Math.floor(Math.random() * 3) + 2; // 1 ~ 3
   var points = [ ];
@@ -573,13 +762,10 @@ GotandaDiamondMine.prototype.createMap = function () {
       point = [ Math.floor(Math.random() * 27), Math.floor(Math.random() * 27) ];
       if (point[0] === 13 && point[1] === 13) { // @ position
         continue;
+      } else if (this.mapSymbol[point[1]][point[0]] !== '.') {
+        continue;
       }
       point_ng = false;
-      for (var j = 0; j < points.length; ++j) {
-        if (points[j][0] === point[0] && points[j][0] === point[0]) {
-          point_ng = true;
-        }
-      }
     }
     points.push(point);
     if (i === 0) {
@@ -596,16 +782,14 @@ GotandaDiamondMine.prototype.createMap = function () {
   this.calculatePath();
 };
 
-GotandaDiamondMine.prototype.createWaves = function () {
+GotandaDiamondMine.prototype.createWaves = function (mine) {
   this.wave = 0;
-  this.waves = [
-    [ '*', 'gem', 0, [ null, null ], { HP: 0 } ],
-    [ 'A', 'monster A', 1, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'B', 'monster B', 2, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'C', 'monster C', 3, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'D', 'monster D', 4, [ null, null ], { HP: Math.floor(Math.random() * 100) } ],
-    [ 'E', 'monster E', 5, [ null, null ], { HP: Math.floor(Math.random() * 100) } ]
+  var waves = this.waves = [
+    [ '*', 'gem', 0, [ null, null ], { HP: 0 } ]
   ];
+  for (var i = 1; i <= 50; ++i) {
+    waves.push([ 'A', 'monster A', 1, [ null, null ], { HP: Math.round(10 * Math.pow(i, 1.1)) } ]);
+  }
 };
 
 GotandaDiamondMine.prototype.createHeroChoices = function () {
@@ -613,7 +797,7 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 };
 
 GotandaDiamondMine.prototype.createMineChoices = function () {
-  this.mineChoices = [ { name: 'ABC', level: 'easy' } ]; // TODO
+  this.mineChoices = [ { name: 'ABC', level: 'easy', map: 'Flats' }, { name: 'ABC', level: 'easy', map: 'Paddy' } ]; // TODO
 };
 
 GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
@@ -630,8 +814,8 @@ GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
   this.itemsInOriginalDeck = deck;
 };
 
-GotandaDiamondMine.prototype.createItemsOnHand = function () {
-  if (this.itemsOnHand.length === 0 && this.itemsInDeck.length === 0) { // reset deck
+GotandaDiamondMine.prototype.createItemsOnHand = function (reset_ok) {
+  if (reset_ok && this.itemsOnHand.length === 0 && this.itemsInDeck.length === 0) { // reset deck
     this.itemsInDeck = this.chance.shuffle(this.itemsInOriginalDeck);
   }
   if (this.itemsOnHand.length !== 3 && this.itemsInDeck.length !== 0) { // draw deck
@@ -641,23 +825,23 @@ GotandaDiamondMine.prototype.createItemsOnHand = function () {
   }
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Game Display Methods
 ////////////////////////////////////////////////////////////////////////////////
-GotandaDiamondMine.toWaveInfoString = function (wave) {
-  return wave[2] + ')' + wave[0] + ' ' + wave[4].HP + 'HP                           ';
+GotandaDiamondMine.toWaveInfoString = function (wave, num) {
+  return num + ')' + wave[0] + ' ' + wave[4].HP + 'HP                           ';
 };
 
 GotandaDiamondMine.prototype.getWaveInfo = function () {
   var wave_now = [], wave_next = [];
   for (var i = 0; i < 6; ++i) {
-    var wave = this.waves[this.wave + i];
+    var wave_num = this.wave + i;
+    var wave = this.waves[wave_num];
     if (wave) {
       if (i === 0) {
-        wave_now.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
+        wave_now.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
       } else {
-        wave_next.push(GotandaDiamondMine.toWaveInfoString(wave).split(''));
+        wave_next.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
       }
     } else {
       wave_next.push(GotandaDiamondMine.EMPTY_LINE);
@@ -687,12 +871,20 @@ GotandaDiamondMine.prototype.getMap = function () {
 };
 
 GotandaDiamondMine.prototype.getStatus = function () {
-  var info_str = '';
+  var state = this.state;
   var status = this.status;
-  for (var key in status) {
-    info_str += status[key] + key + ' ';
+  var info_str = status.HP + '/' + status.maxHP + 'HP ' + status['%'] + '% ' + status['*'] + '* ';
+  if (state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP) {
+    info_str += this.itemsInOriginalDeck.length + 'ITEMS ';
+  } else {
+    info_str += this.itemsOnHand.length + '+' + this.itemsInDeck.length + 'Items ';  
   }
-  return GotandaDiamondMine.colorScreen([ (info_str + this.itemsOnHand.length + '+' + this.itemsInDeck.length + 'Items                           ').split("") ], 'gray');
+  for (var key in status) {
+    if (key !== 'HP' && key !== 'maxHP' && key !== '%' && key !== '*') {
+      info_str += status[key] + key + ' ';
+    }
+  }
+  return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split("") ], 'gray');
 };
 
 GotandaDiamondMine.toItemInfoString = function (item) {
@@ -710,7 +902,7 @@ GotandaDiamondMine.prototype.getItemInfo = function () {
   var items_to_display = (state === GotandaDiamondMine.STATE_TOWN_ITEMS
     ? this.itemsInOriginalDeck
     : state === GotandaDiamondMine.STATE_TOWN_SHOP ? this.itemsInShop : this.itemsOnMap);
-  var display_num = state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP ? 33 : 11;
+  var display_num = state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP ? 32 : 11;
   for (var i = 0; i < display_num; ++i) { 
     var index = Math.min(items_to_display.length > display_num ? items_to_display.length - display_num + i : i);
     if (state === GotandaDiamondMine.STATE_PLACE) {
@@ -816,11 +1008,19 @@ GotandaDiamondMine.prototype.getButton = function () {
       ];
     }
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|     Combine a item      |".split(''),
-      "+-------------------------+".split('')
-    ], this.sacrificingItem === -1 ? 'gray' : 'white');
+    if (this.sacrificingItem === -1) {
+      return [
+        "+-------------------------+".split(''),
+        "|     Replace a item      |".split(''),
+        "+-------------------------+".split('')
+      ];
+    } else {
+      return GotandaDiamondMine.colorScreen([
+        "+-------------------------+".split(''),
+        "|     Combine a item      |".split(''),
+        "+-------------------------+".split('')
+      ], this.canSacrifice ? 'white' : 'gray');
+    }
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
     return GotandaDiamondMine.colorScreen([
       "+-------------------------+".split(''),
@@ -969,11 +1169,11 @@ GotandaDiamondMine.prototype.getTownTab = function () {
 };
 
 GotandaDiamondMine.prototype.getScreenAtTownItems = function () {
-  return [].concat(this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getItemInfo(true), this.getButton());
+  return [].concat(this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getStatus(), this.getItemInfo(true), this.getButton());
 };
 
 GotandaDiamondMine.prototype.getScreenAtTownShop = function () {
-  return [].concat(this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getItemInfo(true), this.getButton());
+  return [].concat(this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getStatus(), this.getItemInfo(true), this.getButton());
 };
 
 GotandaDiamondMine.getDetailMineInfo = function (mine_info) { // 27 x 6
@@ -1004,7 +1204,7 @@ GotandaDiamondMine.prototype.getScreenAtTownMine = function () {
 
 GotandaDiamondMine.getDetailItemInfo = function (item) { // 27 x 9
   var output = [ "+-------------------------+".split("") ];
-  output.push( ("|" + item[0] + " Lvl." + item[2] + " " + item[1] + "                           ").split("") );
+  output.push( ("|" + item[0] + item[2] + " " + item[1] + "                           ").split("") );
   var i = 0;
   for (var key in item[4] ) {
     output.push( ("|" + item[4][key] + " " + key + "                           ").split("") );
@@ -1104,68 +1304,149 @@ Buffer.TYPED_ARRAY_SUPPORT = (function () {
  * By augmenting the instances, we can avoid modifying the `Uint8Array`
  * prototype.
  */
-function Buffer (subject, encoding) {
-  var self = this
-  if (!(self instanceof Buffer)) return new Buffer(subject, encoding)
+function Buffer (arg) {
+  if (!(this instanceof Buffer)) {
+    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
+    if (arguments.length > 1) return new Buffer(arg, arguments[1])
+    return new Buffer(arg)
+  }
 
-  var type = typeof subject
-  var length
+  this.length = 0
+  this.parent = undefined
 
-  if (type === 'number') {
-    length = +subject
-  } else if (type === 'string') {
-    length = Buffer.byteLength(subject, encoding)
-  } else if (type === 'object' && subject !== null) {
-    // assume object is array-like
-    if (subject.type === 'Buffer' && isArray(subject.data)) subject = subject.data
-    length = +subject.length
-  } else {
+  // Common case.
+  if (typeof arg === 'number') {
+    return fromNumber(this, arg)
+  }
+
+  // Slightly less common case.
+  if (typeof arg === 'string') {
+    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
+  }
+
+  // Unusual.
+  return fromObject(this, arg)
+}
+
+function fromNumber (that, length) {
+  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < length; i++) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
+
+  // Assumption: byteLength() return value is always < kMaxLength.
+  var length = byteLength(string, encoding) | 0
+  that = allocate(that, length)
+
+  that.write(string, encoding)
+  return that
+}
+
+function fromObject (that, object) {
+  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
+
+  if (isArray(object)) return fromArray(that, object)
+
+  if (object == null) {
     throw new TypeError('must start with number, buffer, array or string')
   }
 
-  if (length > kMaxLength) {
-    throw new RangeError('Attempt to allocate Buffer larger than maximum size: 0x' +
-      kMaxLength.toString(16) + ' bytes')
+  if (typeof ArrayBuffer !== 'undefined' && object.buffer instanceof ArrayBuffer) {
+    return fromTypedArray(that, object)
   }
 
-  if (length < 0) length = 0
-  else length >>>= 0 // coerce to uint32
+  if (object.length) return fromArrayLike(that, object)
 
+  return fromJsonObject(that, object)
+}
+
+function fromBuffer (that, buffer) {
+  var length = checked(buffer.length) | 0
+  that = allocate(that, length)
+  buffer.copy(that, 0, 0, length)
+  return that
+}
+
+function fromArray (that, array) {
+  var length = checked(array.length) | 0
+  that = allocate(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+// Duplicate of fromArray() to keep fromArray() monomorphic.
+function fromTypedArray (that, array) {
+  var length = checked(array.length) | 0
+  that = allocate(that, length)
+  // Truncating the elements is probably not what people expect from typed
+  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
+  // of the old Buffer constructor.
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = checked(array.length) | 0
+  that = allocate(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
+// Returns a zero-length buffer for inputs that don't conform to the spec.
+function fromJsonObject (that, object) {
+  var array
+  var length = 0
+
+  if (object.type === 'Buffer' && isArray(object.data)) {
+    array = object.data
+    length = checked(array.length) | 0
+  }
+  that = allocate(that, length)
+
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function allocate (that, length) {
   if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Preferred: Return an augmented `Uint8Array` instance for best performance
-    self = Buffer._augment(new Uint8Array(length)) // eslint-disable-line consistent-this
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = Buffer._augment(new Uint8Array(length))
   } else {
-    // Fallback: Return THIS instance of Buffer (created by `new`)
-    self.length = length
-    self._isBuffer = true
+    // Fallback: Return an object instance of the Buffer class
+    that.length = length
+    that._isBuffer = true
   }
 
-  var i
-  if (Buffer.TYPED_ARRAY_SUPPORT && typeof subject.byteLength === 'number') {
-    // Speed optimization -- use set if we're copying from a typed array
-    self._set(subject)
-  } else if (isArrayish(subject)) {
-    // Treat array-ish objects as a byte array
-    if (Buffer.isBuffer(subject)) {
-      for (i = 0; i < length; i++) {
-        self[i] = subject.readUInt8(i)
-      }
-    } else {
-      for (i = 0; i < length; i++) {
-        self[i] = ((subject[i] % 256) + 256) % 256
-      }
-    }
-  } else if (type === 'string') {
-    self.write(subject, 0, encoding)
-  } else if (type === 'number' && !Buffer.TYPED_ARRAY_SUPPORT) {
-    for (i = 0; i < length; i++) {
-      self[i] = 0
-    }
+  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
+  if (fromPool) that.parent = rootParent
+
+  return that
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength.toString(16) + ' bytes')
   }
-
-  if (length > 0 && length <= Buffer.poolSize) self.parent = rootParent
-
-  return self
+  return length | 0
 }
 
 function SlowBuffer (subject, encoding) {
@@ -1189,11 +1470,20 @@ Buffer.compare = function compare (a, b) {
 
   var x = a.length
   var y = b.length
-  for (var i = 0, len = Math.min(x, y); i < len && a[i] === b[i]; i++) {}
+
+  var i = 0
+  var len = Math.min(x, y)
+  while (i < len) {
+    if (a[i] !== b[i]) break
+
+    ++i
+  }
+
   if (i !== len) {
     x = a[i]
     y = b[i]
   }
+
   if (x < y) return -1
   if (y < x) return 1
   return 0
@@ -1218,7 +1508,7 @@ Buffer.isEncoding = function isEncoding (encoding) {
   }
 }
 
-Buffer.concat = function concat (list, totalLength) {
+Buffer.concat = function concat (list, length) {
   if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
 
   if (list.length === 0) {
@@ -1228,14 +1518,14 @@ Buffer.concat = function concat (list, totalLength) {
   }
 
   var i
-  if (totalLength === undefined) {
-    totalLength = 0
+  if (length === undefined) {
+    length = 0
     for (i = 0; i < list.length; i++) {
-      totalLength += list[i].length
+      length += list[i].length
     }
   }
 
-  var buf = new Buffer(totalLength)
+  var buf = new Buffer(length)
   var pos = 0
   for (i = 0; i < list.length; i++) {
     var item = list[i]
@@ -1245,36 +1535,33 @@ Buffer.concat = function concat (list, totalLength) {
   return buf
 }
 
-Buffer.byteLength = function byteLength (str, encoding) {
-  var ret
-  str = str + ''
+function byteLength (string, encoding) {
+  if (typeof string !== 'string') string = String(string)
+
+  if (string.length === 0) return 0
+
   switch (encoding || 'utf8') {
     case 'ascii':
     case 'binary':
     case 'raw':
-      ret = str.length
-      break
+      return string.length
     case 'ucs2':
     case 'ucs-2':
     case 'utf16le':
     case 'utf-16le':
-      ret = str.length * 2
-      break
+      return string.length * 2
     case 'hex':
-      ret = str.length >>> 1
-      break
+      return string.length >>> 1
     case 'utf8':
     case 'utf-8':
-      ret = utf8ToBytes(str).length
-      break
+      return utf8ToBytes(string).length
     case 'base64':
-      ret = base64ToBytes(str).length
-      break
+      return base64ToBytes(string).length
     default:
-      ret = str.length
+      return string.length
   }
-  return ret
 }
+Buffer.byteLength = byteLength
 
 // pre-set for values that may exist in the future
 Buffer.prototype.length = undefined
@@ -1284,8 +1571,8 @@ Buffer.prototype.parent = undefined
 Buffer.prototype.toString = function toString (encoding, start, end) {
   var loweredCase = false
 
-  start = start >>> 0
-  end = end === undefined || end === Infinity ? this.length : end >>> 0
+  start = start | 0
+  end = end === undefined || end === Infinity ? this.length : end | 0
 
   if (!encoding) encoding = 'utf8'
   if (start < 0) start = 0
@@ -1427,13 +1714,11 @@ function hexWrite (buf, string, offset, length) {
 }
 
 function utf8Write (buf, string, offset, length) {
-  var charsWritten = blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
-  return charsWritten
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
 }
 
 function asciiWrite (buf, string, offset, length) {
-  var charsWritten = blitBuffer(asciiToBytes(string), buf, offset, length)
-  return charsWritten
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
 }
 
 function binaryWrite (buf, string, offset, length) {
@@ -1441,75 +1726,83 @@ function binaryWrite (buf, string, offset, length) {
 }
 
 function base64Write (buf, string, offset, length) {
-  var charsWritten = blitBuffer(base64ToBytes(string), buf, offset, length)
-  return charsWritten
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
 }
 
-function utf16leWrite (buf, string, offset, length) {
-  var charsWritten = blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
-  return charsWritten
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
 }
 
 Buffer.prototype.write = function write (string, offset, length, encoding) {
-  // Support both (string, offset, length, encoding)
-  // and the legacy (string, encoding, offset, length)
-  if (isFinite(offset)) {
-    if (!isFinite(length)) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
       encoding = length
       length = undefined
     }
-  } else {  // legacy
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
     var swap = encoding
     encoding = offset
-    offset = length
+    offset = length | 0
     length = swap
   }
 
-  offset = Number(offset) || 0
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
 
-  if (length < 0 || offset < 0 || offset > this.length) {
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
     throw new RangeError('attempt to write outside buffer bounds')
   }
 
-  var remaining = this.length - offset
-  if (!length) {
-    length = remaining
-  } else {
-    length = Number(length)
-    if (length > remaining) {
-      length = remaining
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'binary':
+        return binaryWrite(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
     }
   }
-  encoding = String(encoding || 'utf8').toLowerCase()
-
-  var ret
-  switch (encoding) {
-    case 'hex':
-      ret = hexWrite(this, string, offset, length)
-      break
-    case 'utf8':
-    case 'utf-8':
-      ret = utf8Write(this, string, offset, length)
-      break
-    case 'ascii':
-      ret = asciiWrite(this, string, offset, length)
-      break
-    case 'binary':
-      ret = binaryWrite(this, string, offset, length)
-      break
-    case 'base64':
-      ret = base64Write(this, string, offset, length)
-      break
-    case 'ucs2':
-    case 'ucs-2':
-    case 'utf16le':
-    case 'utf-16le':
-      ret = utf16leWrite(this, string, offset, length)
-      break
-    default:
-      throw new TypeError('Unknown encoding: ' + encoding)
-  }
-  return ret
 }
 
 Buffer.prototype.toJSON = function toJSON () {
@@ -1632,8 +1925,8 @@ function checkOffset (offset, ext, length) {
 }
 
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
+  offset = offset | 0
+  byteLength = byteLength | 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -1647,8 +1940,8 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
 }
 
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
+  offset = offset | 0
+  byteLength = byteLength | 0
   if (!noAssert) {
     checkOffset(offset, byteLength, this.length)
   }
@@ -1696,8 +1989,8 @@ Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
 }
 
 Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
+  offset = offset | 0
+  byteLength = byteLength | 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -1714,8 +2007,8 @@ Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
+  offset = offset | 0
+  byteLength = byteLength | 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var i = byteLength
@@ -1795,15 +2088,15 @@ function checkInt (buf, value, offset, ext, max, min) {
 
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
+  offset = offset | 0
+  byteLength = byteLength | 0
   if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
 
   var mul = 1
   var i = 0
   this[offset] = value & 0xFF
   while (++i < byteLength && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) >>> 0 & 0xFF
+    this[offset + i] = (value / mul) & 0xFF
   }
 
   return offset + byteLength
@@ -1811,15 +2104,15 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
 
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
+  offset = offset | 0
+  byteLength = byteLength | 0
   if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
 
   var i = byteLength - 1
   var mul = 1
   this[offset + i] = value & 0xFF
   while (--i >= 0 && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) >>> 0 & 0xFF
+    this[offset + i] = (value / mul) & 0xFF
   }
 
   return offset + byteLength
@@ -1827,7 +2120,7 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
 
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   this[offset] = value
@@ -1844,7 +2137,7 @@ function objectWriteUInt16 (buf, value, offset, littleEndian) {
 
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
@@ -1857,7 +2150,7 @@ Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert
 
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
@@ -1877,7 +2170,7 @@ function objectWriteUInt32 (buf, value, offset, littleEndian) {
 
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset + 3] = (value >>> 24)
@@ -1892,7 +2185,7 @@ Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert
 
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 24)
@@ -1907,13 +2200,11 @@ Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert
 
 Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) {
-    checkInt(
-      this, value, offset, byteLength,
-      Math.pow(2, 8 * byteLength - 1) - 1,
-      -Math.pow(2, 8 * byteLength - 1)
-    )
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
 
   var i = 0
@@ -1929,13 +2220,11 @@ Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, no
 
 Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) {
-    checkInt(
-      this, value, offset, byteLength,
-      Math.pow(2, 8 * byteLength - 1) - 1,
-      -Math.pow(2, 8 * byteLength - 1)
-    )
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
 
   var i = byteLength - 1
@@ -1951,7 +2240,7 @@ Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, no
 
 Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
@@ -1961,7 +2250,7 @@ Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
 
 Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
@@ -1974,7 +2263,7 @@ Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) 
 
 Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
@@ -1987,7 +2276,7 @@ Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) 
 
 Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
@@ -2002,7 +2291,7 @@ Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) 
 
 Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset >>> 0
+  offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (value < 0) value = 0xffffffff + value + 1
   if (Buffer.TYPED_ARRAY_SUPPORT) {
@@ -2055,11 +2344,11 @@ Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert
 }
 
 // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function copy (target, target_start, start, end) {
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
   if (!start) start = 0
   if (!end && end !== 0) end = this.length
-  if (target_start >= target.length) target_start = target.length
-  if (!target_start) target_start = 0
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
   if (end > 0 && end < start) end = start
 
   // Copy 0 bytes; we're done
@@ -2067,7 +2356,7 @@ Buffer.prototype.copy = function copy (target, target_start, start, end) {
   if (target.length === 0 || this.length === 0) return 0
 
   // Fatal error conditions
-  if (target_start < 0) {
+  if (targetStart < 0) {
     throw new RangeError('targetStart out of bounds')
   }
   if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
@@ -2075,18 +2364,18 @@ Buffer.prototype.copy = function copy (target, target_start, start, end) {
 
   // Are we oob?
   if (end > this.length) end = this.length
-  if (target.length - target_start < end - start) {
-    end = target.length - target_start + start
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
   }
 
   var len = end - start
 
   if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
     for (var i = 0; i < len; i++) {
-      target[i + target_start] = this[i + start]
+      target[i + targetStart] = this[i + start]
     }
   } else {
-    target._set(this.subarray(start, start + len), target_start)
+    target._set(this.subarray(start, start + len), targetStart)
   }
 
   return len
@@ -2231,12 +2520,6 @@ function base64clean (str) {
 function stringtrim (str) {
   if (str.trim) return str.trim()
   return str.replace(/^\s+|\s+$/g, '')
-}
-
-function isArrayish (subject) {
-  return isArray(subject) || Buffer.isBuffer(subject) ||
-      subject && typeof subject === 'object' &&
-      typeof subject.length === 'number'
 }
 
 function toHex (n) {
@@ -2497,7 +2780,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
 },{}],4:[function(require,module,exports){
-exports.read = function(buffer, offset, isLE, mLen, nBytes) {
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
       eMax = (1 << eLen) - 1,
@@ -2505,32 +2788,32 @@ exports.read = function(buffer, offset, isLE, mLen, nBytes) {
       nBits = -7,
       i = isLE ? (nBytes - 1) : 0,
       d = isLE ? -1 : 1,
-      s = buffer[offset + i];
+      s = buffer[offset + i]
 
-  i += d;
+  i += d
 
-  e = s & ((1 << (-nBits)) - 1);
-  s >>= (-nBits);
-  nBits += eLen;
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8);
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
 
-  m = e & ((1 << (-nBits)) - 1);
-  e >>= (-nBits);
-  nBits += mLen;
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8);
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
 
   if (e === 0) {
-    e = 1 - eBias;
+    e = 1 - eBias
   } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity);
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
   } else {
-    m = m + Math.pow(2, mLen);
-    e = e - eBias;
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
   }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
-};
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
 
-exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c,
       eLen = nBytes * 8 - mLen - 1,
       eMax = (1 << eLen) - 1,
@@ -2538,49 +2821,49 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
       rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
       i = isLE ? 0 : (nBytes - 1),
       d = isLE ? 1 : -1,
-      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0;
+      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
 
-  value = Math.abs(value);
+  value = Math.abs(value)
 
   if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0;
-    e = eMax;
+    m = isNaN(value) ? 1 : 0
+    e = eMax
   } else {
-    e = Math.floor(Math.log(value) / Math.LN2);
+    e = Math.floor(Math.log(value) / Math.LN2)
     if (value * (c = Math.pow(2, -e)) < 1) {
-      e--;
-      c *= 2;
+      e--
+      c *= 2
     }
     if (e + eBias >= 1) {
-      value += rt / c;
+      value += rt / c
     } else {
-      value += rt * Math.pow(2, 1 - eBias);
+      value += rt * Math.pow(2, 1 - eBias)
     }
     if (value * c >= 2) {
-      e++;
-      c /= 2;
+      e++
+      c /= 2
     }
 
     if (e + eBias >= eMax) {
-      m = 0;
-      e = eMax;
+      m = 0
+      e = eMax
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen);
-      e = e + eBias;
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
     } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
-      e = 0;
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
     }
   }
 
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8);
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
 
-  e = (e << mLen) | m;
-  eLen += mLen;
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
 
-  buffer[offset + i - d] |= s * 128;
-};
+  buffer[offset + i - d] |= s * 128
+}
 
 },{}],5:[function(require,module,exports){
 
