@@ -38,7 +38,7 @@ if (typeof module === "object" && module) {
 // Common Definitions
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.CLASSES = [
-  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||//%%' }
+  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||||////%%' }
 ];
 
 // [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
@@ -829,9 +829,9 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 GotandaDiamondMine.prototype.createMineChoices = function () {
   // TODO
   this.mineChoices = [
-    { name: 'ABC', level: 1.4, map: 'Flats' },
-    { name: 'ABC', level: 1.6, map: 'Small' },
-    { name: 'ABC', level: 1.8, map: 'Paddy' }
+    { name: 'ABC', level: 1.2, map: 'Flats' },
+    { name: 'ABC', level: 1.3, map: 'Small' },
+    { name: 'ABC', level: 1.4, map: 'Paddy' }
   ];
 };
 
