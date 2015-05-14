@@ -88,6 +88,35 @@ GotandaDiamondMine.ITEM_ABBR = {
 };
 
 GotandaDiamondMine.MAPS = {
+  'Small': [
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "         .........         ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+    "                           ".split(''),
+  ],
   'Flats': [
     "...........................".split(''),
     "...........................".split(''),
@@ -783,11 +812,12 @@ GotandaDiamondMine.prototype.createMap = function (mine) {
 
 GotandaDiamondMine.prototype.createWaves = function (mine) {
   this.wave = 0;
+  var level = mine['level'];
   var waves = this.waves = [
     [ '*', 'gem', 0, [ null, null ], { HP: 0 } ]
   ];
   for (var i = 1; i <= 50; ++i) {
-    waves.push([ 'A', 'monster A', 1, [ null, null ], { HP: Math.round(10 * Math.pow(i, 1.1)) } ]);
+    waves.push([ 'A', 'monster A', 1, [ null, null ], { HP: Math.round(10 * Math.pow(i, level)) } ]);
   }
 };
 
@@ -796,7 +826,12 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 };
 
 GotandaDiamondMine.prototype.createMineChoices = function () {
-  this.mineChoices = [ { name: 'ABC', level: 'easy', map: 'Flats' }, { name: 'ABC', level: 'easy', map: 'Paddy' } ]; // TODO
+  // TODO
+  this.mineChoices = [
+    { name: 'ABC', level: 1.4, map: 'Flats' },
+    { name: 'ABC', level: 1.6, map: 'Small' },
+    { name: 'ABC', level: 1.8, map: 'Paddy' }
+  ];
 };
 
 GotandaDiamondMine.prototype.createDeckFromTemplate = function (template) {
