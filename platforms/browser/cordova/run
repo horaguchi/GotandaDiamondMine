@@ -30,7 +30,8 @@ switch (process.platform) {
   case 'win32':
     //TODO: Use regex to fix location of chrome.exe
     //TODO: Get --user-data-dir to work for windows
-    spawn('C:/Program Files (x86)/Google/Chrome/Application/chrome.exe', ['--user-data-dir="C:/Chromedevsession"', '--disable-web-security', project]);
+    //spawn('C:/Program Files (x86)/Google/Chrome/Application/chrome.exe', ['--user-data-dir="C:/Chromedevsession"', '--disable-web-security', project]);
+    spawn('C:/Program Files (x86)/Google/Chrome/Application/chrome.exe', ['--disable-web-security', project]);
     break;
 }
 
