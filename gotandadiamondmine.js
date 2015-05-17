@@ -940,96 +940,74 @@ GotandaDiamondMine.prototype.getScreen = function () {
   }
 };
 
+GotandaDiamondMine.getButtonBox = function (str, color) {
+  return GotandaDiamondMine.colorScreen([
+    "+-------------------------+".split(''),
+    ("|" + str + "|").split(''),
+    "+-------------------------+".split('')
+  ], color);
+};
+
 GotandaDiamondMine.prototype.getButton = function () {
   var state = this.state;
   if (state === GotandaDiamondMine.STATE_TITLE) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|          Play           |".split(''),
-      "+-------------------------+".split('')
-    ], 'lime');
+    return GotandaDiamondMine.getButtonBox('          Play           ', 'lime');
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|      Choose a hero      |".split(''),
-      "+-------------------------+".split('')
-    ], this.selectedHero === -1 ? 'gray' : 'lime');
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|     Destroy an item     |".split(''),
-      "+-------------------------+".split('')
-    ], this.selectedItem === -1 ? 'gray' : 'lime');
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|       Buy an item       |".split(''),
-      "+-------------------------+".split('')
-    ], this.selectedItem === -1 ? 'gray' : 'lime');
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|      Choose a mine      |".split(''),
-      "+-------------------------+".split('')
-    ], this.selectedMine === -1 ? 'gray' : 'lime');
-  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|     Choose an item      |".split(''),
-      "+-------------------------+".split('')
-    ], this.selectedItem === -1 ? 'gray' : 'lime');
-  } else if (state === GotandaDiamondMine.STATE_PLACE) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      this.placeBlocked ? "|        Blocking!         |".split('') : "|     Choose a place      |".split(''),
-      "+-------------------------+".split('')
-    ], this.selectedPlace ? 'lime' : 'gray');
-  } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
-    if (this.itemsOnMap.length) {
-      return GotandaDiamondMine.colorScreen([
-        "+-------------------------+".split(''),
-        "|     Go to next wave     |".split(''),
-        "+-------------------------+".split('')
-      ], 'lime');
+    if (this.selectedHero === -1) {
+      return GotandaDiamondMine.getButtonBox('      Choose a hero      ', 'gray');
     } else {
-      return GotandaDiamondMine.colorScreen([
-        "+-------------------------+".split(''),
-        "|    Preview the path     |".split(''),
-        "+-------------------------+".split('')
-      ], 'lime');
+      return GotandaDiamondMine.getButtonBox('    Choose this hero     ', 'lime');
+    }
+  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
+    if (this.selectedItem === -1) {
+      return GotandaDiamondMine.getButtonBox('     Destroy an item     ', 'gray');
+    } else {
+      return GotandaDiamondMine.getButtonBox('    Destroy this item    ', 'lime');  
+    }
+  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
+    if (this.selectedItem === -1) {
+      return GotandaDiamondMine.getButtonBox('       Buy an item       ', 'gray');
+    } else {
+      return GotandaDiamondMine.getButtonBox('      Buy this item      ', 'lime');
+    }
+  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
+    if (this.selectedMine === -1) {
+      return GotandaDiamondMine.getButtonBox('      Choose a mine      ', 'gray');
+    } else {
+      return GotandaDiamondMine.getButtonBox('    Choose this mine     ', 'lime');
+    }
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+    if (this.selectedItem === -1) {
+      return GotandaDiamondMine.getButtonBox('     Choose an item      ', 'gray');
+    } else {
+      return GotandaDiamondMine.getButtonBox('    Choose this item     ', 'lime');
+    }
+  } else if (state === GotandaDiamondMine.STATE_PLACE) {
+    if (this.selectedPlace === null) {
+      return GotandaDiamondMine.getButtonBox(this.placeBlocked ? '        Blocking!         ' : '     Choose a place      ', 'gray');
+    } else {
+      return GotandaDiamondMine.getButtonBox(this.placeBlocked ? '        Blocking!         ' : '    Choose this place    ', 'lime');
+    }
+  } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
+    if (this.itemsOnMap.length === 0) {
+      return GotandaDiamondMine.getButtonBox('    Preview the path     ', 'lime');
+    } else {
+      return GotandaDiamondMine.getButtonBox('     Go to next wave     ', 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
     if (this.sacrificingItem === -1) {
-      return GotandaDiamondMine.colorScreen([
-        "+-------------------------+".split(''),
-        "|     Replace a item      |".split(''),
-        "+-------------------------+".split('')
-      ], 'lime');
+      return GotandaDiamondMine.getButtonBox('    Replace this item    ', 'lime');
+    } else if (this.canSacrifice) {
+      return GotandaDiamondMine.getButtonBox('   Combine these items   ', 'lime');
     } else {
-      return GotandaDiamondMine.colorScreen([
-        "+-------------------------+".split(''),
-        "|     Combine a item      |".split(''),
-        "+-------------------------+".split('')
-      ], this.canSacrifice ? 'lime' : 'gray');
+      return GotandaDiamondMine.getButtonBox('     Cannot combine!     ', 'gray');
     }
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|     Now progressing     |".split(''),
-      "+-------------------------+".split('')
-    ], 'gray');
+    return GotandaDiamondMine.getButtonBox('     Now progressing     ', 'gray');
   } else if (state === GotandaDiamondMine.STATE_DEFEATED) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|        You died         |".split(''),
-      "+-------------------------+".split('')
-    ], 'lime');
+    return GotandaDiamondMine.getButtonBox('        You died         ', 'lime');
   } else if (state === GotandaDiamondMine.STATE_VICTORY) {
-    return GotandaDiamondMine.colorScreen([
-      "+-------------------------+".split(''),
-      "|    Back to the town     |".split(''),
-      "+-------------------------+".split('')
-    ], 'lime');
+    return GotandaDiamondMine.getButtonBox('    Back to the town     ', 'lime');
   } else {
     return [ GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE ];
   }
@@ -1290,4 +1268,3 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
   }
   return info;
 };
-
