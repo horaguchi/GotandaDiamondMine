@@ -9,7 +9,7 @@ android: gotandadiamondmine.browserify.js
 	cordova build android
 
 android-run: gotandadiamondmine.browserify.js
-	cordova build android
+	cordova run android
 
 gotandadiamondmine.browserify.js: gotandadiamondmine.js
 	npm install -d
