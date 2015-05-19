@@ -1166,17 +1166,30 @@ GotandaDiamondMine.prototype.getScreenDefault = function () {
 };
 
 GotandaDiamondMine.toWaveInfoString = function (wave, num) {
-  return num + ')' + wave[0] + ' ' + wave[4].HP + 'HP                           ';
+  return num + ')' + wave[2] + wave[0] + ' ' + wave[4].HP + 'HP                           ';
+};
+
+GotandaDiamondMine.prototype.getUnitsInfoString = function (wave, num) {
+  var live_units = this.units.filter(function (unit) {
+    return unit[5]['Damage'] < unit[4]['HP'];
+  });
+  var unit = live_units.length === 0 ? this.units[this.units.length - 1] : live_units[0];
+  return num + ')' + live_units.length + wave[0] + ' ' + (unit[4]['HP'] - unit[5]['Damage']) + '/' + unit[4]['HP'] + 'HP                           ';
 };
 
 GotandaDiamondMine.prototype.getWaveInfo = function () {
+  var state = this.state;
   var wave_now = [], wave_next = [];
   for (var i = 0; i < 6; ++i) {
     var wave_num = this.wave + i;
     var wave = this.waves[wave_num];
     if (wave) {
       if (i === 0) {
-        wave_now.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
+        if (state === GotandaDiamondMine.STATE_ANIMATION) {
+          wave_now.push(this.getUnitsInfoString(wave, wave_num).split(''));
+        } else {
+          wave_now.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
+        }
       } else {
         wave_next.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
       }
