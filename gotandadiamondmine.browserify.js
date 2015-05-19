@@ -806,29 +806,30 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
   var items_wait = this.itemsWait;
   for (var i = 0; i < items_on_map.length; ++i) {
     if (!items_wait[i]) { // undefined or 0
-      //items_wait[i] += this.actionItem(items_on_map[i], this.waves[this.wave]);
-      //TODO: action to units
-      items_wait[i] += 4;
+      items_wait[i] += this.actionItem(items_on_map[i], units);
     }
     --items_wait[i];
   }
   return true;
 };
 
-GotandaDiamondMine.prototype.actionItem = function (item, wave) {
+GotandaDiamondMine.prototype.actionItem = function (item, units) {
   var item_x = item[3][0], item_y = item[3][1];
-  var wave_x = wave[3][0], wave_y = wave[3][1];
   var item_param = item[4];
-  var wave_param = wave[4];
-  var speed = item_param['Speed'] || 4;
-  if (Math.abs(wave_x - item_x) < 2 && Math.abs(wave_y - item_y) < 2) {
-    if (item_param['Physical Damage']) {
-      wave_param['HP'] -= this.roll(item_param['Physical Damage']) - (wave_param['AC'] || 0);
+  var result = 1;
+  for (var i = 0; i < units.length; ++i) {
+    var unit = units[i];
+    var unit_x = unit[3][0], unit_y = unit[3][1];
+    var unit_param = unit[4];
+    var unit_status = unit[5];
+    if (Math.abs(unit_x - item_x) < 2 && Math.abs(unit_y - item_y) < 2) {
+      if (item_param['Physical Damage']) {
+        unit_status['Damage'] += this.roll(item_param['Physical Damage']) - (unit_param['AC'] || 0);
+      }
+      result = item_param['Speed'] || 4;
+      break;
     }
-    return speed;
-  } else { // no-attack, wait
-    return 1;
-  } 
+  }
 };
 
 GotandaDiamondMine.prototype.addItemToMap = function (item) {
