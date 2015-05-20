@@ -10,7 +10,7 @@ __.getLang = function () {
   return this.lang;
 };
 
-__.ja = require('./__ja');
+__.ja = require('./__ja.po2json.json');
 //__.ab = require('__ab');
 //__.cd = require('__cd');
 

@@ -23,7 +23,7 @@
     "url": "git://github.com/horaguchi/GotandaDiamondMine.git"
   },
   "scripts": {
-    "prepublish": "node ./scripts/prepublish/browserify.js"
+    "prepublish": "po2json --format=mf __ja.po __ja.po2json.json && browserify gotandadiamondmine-html5.js -s GotandaDiamondMine -o gotandadiamondmine-html5.browserify.js"
   },
   "directories": {
     "test": "test"
@@ -34,6 +34,7 @@
     "blessed": "0.1.56"
   },
   "devDependencies": {
+    "po2json": "0.4.1",
     "browserify": "10.1.3",
     "shelljs": "0.4.0"
   }

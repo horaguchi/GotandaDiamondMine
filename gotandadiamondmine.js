@@ -1,5 +1,6 @@
-var PF = require("pathfinding");
-var Chance = require("chance");
+var PF = require('pathfinding');
+var Chance = require('chance');
+var __ = require('./__');
 
 var GotandaDiamondMine = function () {
   this.finder = new PF.AStarFinder({
@@ -7,6 +8,8 @@ var GotandaDiamondMine = function () {
     diagonalMovement: PF.DiagonalMovement.Never
   });
   this.chance = new Chance();
+  this.__ = __;
+  this.__.setLang('ja');
 
   this.state = GotandaDiamondMine.STATE_TITLE;
 
@@ -32,27 +35,27 @@ GotandaDiamondMine.STATE_DEFEATED    = 'defeated';
 GotandaDiamondMine.STATE_VICTORY     = 'victory';
 
 GotandaDiamondMine.CLASSES = [
-  { HP: 2, maxHP:10, '%': 100, '*': 0, STR: 3, deckTemplate: '||||////%%' }
+  { 'HP': 10,  '%': 100, '*': 0, 'STR': 3, "deckTemplate": '||||////%%' }
 ];
 
 // [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
-  [ '|', 'a dagger', 1, [ null, null ], { 'Physical Damage': '1d4', 'Upgrade': '+0%' }, null ],
-  [ '|', 'a dagger', 2, [ null, null ], { 'Physical Damage': '2d4', 'Upgrade': '+0%' }, null ],
-  [ '|', 'a dagger', 3, [ null, null ], { 'Physical Damage': '5d4', 'Upgrade': '+0%' }, null ],
-  [ '|', 'a dagger', 4, [ null, null ], { 'Physical Damage': '15d4', 'Upgrade': '+0%' }, null ],
-  [ '|', 'a sword', 1, [ null, null ], { 'Physical Damage': '1d6', 'Upgrade': '+0|' }, null ],
-  [ '|', 'a sword', 2, [ null, null ], { 'Physical Damage': '2d6', 'Upgrade': '+0|' }, null ],
-  [ '|', 'a sword', 3, [ null, null ], { 'Physical Damage': '5d6', 'Upgrade': '+0|' }, null ],
-  [ '|', 'a sword', 4, [ null, null ], { 'Physical Damage': '15d6', 'Upgrade': '+0|' }, null ],
-  [ '/', 'a pole axe', 1, [ null, null ], { 'Physical Damage': '1d8', 'Upgrade': '+0/' }, null ],
-  [ '/', 'a pole axe', 2, [ null, null ], { 'Physical Damage': '2d8', 'Upgrade': '+0/' }, null ],
-  [ '/', 'a pole axe', 3, [ null, null ], { 'Physical Damage': '5d8', 'Upgrade': '+0/' }, null ],
-  [ '/', 'a pole axe', 4, [ null, null ], { 'Physical Damage': '15d8', 'Upgrade': '+0/' }, null ],
-  [ '%', 'an apple', 1, [ null, null ], { 'Energy': '^15', 'Upgrade': '+0%' }, null ],
-  [ '"', 'an amulet of damage', 1, [ null, null ], { 'Physical Damage Buff': '1.5', 'Upgrade': '+0%' }, null ],
-  [ '[', 'a ring armour', 1, [ null, null ], { 'Armor Class': '+10', '\ Luck Bonus': '+25', 'Upgrade': '+0[' }, null ],
-  [ '`', 'a rock', 1, [ null, null ], { 'Upgrade': '+0`' }, null ]
+  [ '|', "a dagger",            1, [ null, null ], { "Physical Damage":  '1d4',     "Upgrade": '+0%' }, null ],
+  [ '|', "a dagger",            2, [ null, null ], { "Physical Damage":  '2d4',     "Upgrade": '+0%' }, null ],
+  [ '|', "a dagger",            3, [ null, null ], { "Physical Damage":  '5d4',     "Upgrade": '+0%' }, null ],
+  [ '|', "a dagger",            4, [ null, null ], { "Physical Damage": '15d4',     "Upgrade": '+0%' }, null ],
+  [ '|', "a short sword",       1, [ null, null ], { "Physical Damage":  '1d6',     "Upgrade": '+0|' }, null ],
+  [ '|', "a short sword",       2, [ null, null ], { "Physical Damage":  '2d6',     "Upgrade": '+0|' }, null ],
+  [ '|', "a short sword",       3, [ null, null ], { "Physical Damage":  '5d6',     "Upgrade": '+0|' }, null ],
+  [ '|', "a short sword",       4, [ null, null ], { "Physical Damage": '15d6',     "Upgrade": '+0|' }, null ],
+  [ '/', "a pole axe",          1, [ null, null ], { "Physical Damage":  '1d8',     "Upgrade": '+0/' }, null ],
+  [ '/', "a pole axe",          2, [ null, null ], { "Physical Damage":  '2d8',     "Upgrade": '+0/' }, null ],
+  [ '/', "a pole axe",          3, [ null, null ], { "Physical Damage":  '5d8',     "Upgrade": '+0/' }, null ],
+  [ '/', "a pole axe",          4, [ null, null ], { "Physical Damage": '15d8',     "Upgrade": '+0/' }, null ],
+  [ '%', "an apple",            1, [ null, null ], { "Energy": '^15',               "Upgrade": '+0%' }, null ],
+  [ '"', "an amulet of damage", 1, [ null, null ], { "Physical Damage Buff": '1.5', "Upgrade": '+0%' }, null ],
+  [ '[', "a ring armour",       1, [ null, null ], { "Armor Class": '+10', "\\ Luck Bonus": '+25', "Upgrade": '+0[' }, null ],
+  [ '`', "a rock",              1, [ null, null ], { "Upgrade": '+0`' }, null ]
 ];
 
 GotandaDiamondMine.ITEMS_MAP = (function (items) { // ex. { 'a dagger': [ undefined, 0, 1, 2 ], ... }
@@ -66,28 +69,28 @@ GotandaDiamondMine.ITEMS_MAP = (function (items) { // ex. { 'a dagger': [ undefi
 })(GotandaDiamondMine.ITEMS);
 
 GotandaDiamondMine.ITEM_ABBR = {
-  '|': 'An edged weapon',
-  '\\': 'A hafted weapon',
-  '/': 'A pole weapon',
-  'Upgrade': 'UG',
-  'Physical Damage': 'PD',
-  'Fire Damage': 'FD',
-  'Cold Damage': 'CD',
-  'Lightning Damage': 'LD',
-  'Poison Damage': 'PD',
-  'Armor Class': 'AC',
-  'All Resistance': 'AR',
-  'Fire Resistance': 'FR',
-  'Cold Resistance': 'CR',
-  'Lightning Resistance': 'LR',
-  'Poison Resistance': 'PR',
-  'Physical Damage Buff': 'PDB',
-  'Energy': '%',
-  '\ Luck Bonus': '%LB'
+  '|': "An edged weapon",
+  '\\': "A hafted weapon",
+  '/': "A pole weapon",
+  "Upgrade": 'UG',
+  "Physical Damage": 'PD',
+  "Fire Damage": 'FD',
+  "Cold Damage": 'CD',
+  "Lightning Damage": 'LD',
+  "Poison Damage": 'PD',
+  "Armor Class": 'AC',
+  "All Resistance": 'AR',
+  "Fire Resistance": 'FR',
+  "Cold Resistance": 'CR',
+  "Lightning Resistance": 'LR',
+  "Poison Resistance": 'PR',
+  "Physical Damage Buff": 'PDB',
+  "Energy": '%',
+  "\\ Luck Bonus": '%LB'
 };
 
 GotandaDiamondMine.MAPS = {
-  'Small': [
+  "Small": [
     '                           '.split(''),
     '                           '.split(''),
     '                           '.split(''),
@@ -116,112 +119,112 @@ GotandaDiamondMine.MAPS = {
     '                           '.split(''),
     '                           '.split(''),
   ],
-  'Flats': [
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split(''),
-    "...........................".split('')
+  "Flats": [
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split(''),
+    '...........................'.split('')
   ],
-  'Paddy': [
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "   .....................   ".split(''),
-    "   .....................   ".split(''),
-    "   .....................   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   .....................   ".split(''),
-    "   .....................   ".split(''),
-    "   .....................   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   ...      ...      ...   ".split(''),
-    "   .....................   ".split(''),
-    "   .....................   ".split(''),
-    "   .....................   ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split('')
+  "Paddy": [
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '   .....................   '.split(''),
+    '   .....................   '.split(''),
+    '   .....................   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   .....................   '.split(''),
+    '   .....................   '.split(''),
+    '   .....................   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   ...      ...      ...   '.split(''),
+    '   .....................   '.split(''),
+    '   .....................   '.split(''),
+    '   .....................   '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split('')
   ]
 };
 
 GotandaDiamondMine.TITLE_SCREEN = [
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "Gotanda Diamond Mine v0.0.1".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split(''),
-    "                           ".split('')
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    'Gotanda Diamond Mine v0.0.1'.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split(''),
+    '                           '.split('')
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -229,9 +232,9 @@ GotandaDiamondMine.TITLE_SCREEN = [
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.REGEXP_DICE = /^([-+^])?(\d+)?(d\d+)?$/;
 GotandaDiamondMine.prototype.roll = function (param) {
-  if (typeof param === "number") {
+  if (typeof param === 'number') {
     return param;
-  } else if (typeof param !== "string") {
+  } else if (typeof param !== 'string') {
     return 0; // invalid param
   }
   var sum = 0;
@@ -401,39 +404,39 @@ GotandaDiamondMine.colorScreen = function (arr, color, mode, from_x, to_x) {
   return copied;
 };
 
-GotandaDiamondMine.EMPTY_LINE = [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "];
+GotandaDiamondMine.EMPTY_LINE = [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '];
 
 GotandaDiamondMine.EMPTY_BOX = [
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
 ];
 
 GotandaDiamondMine.EMPTY_MINE_BOX = [
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-  [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
 ];
 
 GotandaDiamondMine.EMPTY_LINED_BOX = [
-  ["+","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","+"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["|"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","|"],
-  ["+","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","-","+"]
+  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+']
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -877,7 +880,7 @@ GotandaDiamondMine.prototype.pointVictory = function (x, y) {
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.prototype.createMap = function (mine) {
   this.mapSymbol = GotandaDiamondMine.MAPS[mine['map']].map(function (row) { return row.concat(); });
-  this.mapColor = this.mapSymbol.map(function (row) { return row.map(function (value) { return value === ' ' ? '' : "gray"; }); });
+  this.mapColor = this.mapSymbol.map(function (row) { return row.map(function (value) { return value === ' ' ? '' : 'gray'; }); });
 
   var points_num = Math.floor(Math.random() * 3) + 2; // 1 ~ 3
   var points = [ ];
@@ -981,74 +984,74 @@ GotandaDiamondMine.prototype.getScreen = function () {
   }
 };
 
-GotandaDiamondMine.getButtonBox = function (str, color) {
+GotandaDiamondMine.prototype.getButtonBox = function (str, color) {
   return GotandaDiamondMine.colorScreen([
-    "+-------------------------+".split(''),
-    ("|" + GotandaDiamondMine.center(str, 25) + "|").split(''),
-    "+-------------------------+".split('')
+    '+-------------------------+'.split(''),
+    ('|' + GotandaDiamondMine.center(this.__(str), 25) + '|').split(''),
+    '+-------------------------+'.split('')
   ], color);
 };
 
 GotandaDiamondMine.prototype.getButton = function () {
   var state = this.state;
   if (state === GotandaDiamondMine.STATE_TITLE) {
-    return GotandaDiamondMine.getButtonBox('Play', 'lime');
+    return this.getButtonBox("Play", 'lime');
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) {
     if (this.selectedHero === -1) {
-      return GotandaDiamondMine.getButtonBox('Choose a hero', 'gray');
+      return this.getButtonBox("Choose a hero", 'gray');
     } else {
-      return GotandaDiamondMine.getButtonBox('Choose this hero', 'lime');
+      return this.getButtonBox("Choose this hero", 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
     if (this.selectedItem === -1) {
-      return GotandaDiamondMine.getButtonBox('Destroy an item', 'gray');
+      return this.getButtonBox("Destroy an item", 'gray');
     } else {
-      return GotandaDiamondMine.getButtonBox('Destroy this item', 'lime');  
+      return this.getButtonBox("Destroy this item", 'lime');  
     }
   } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     if (this.selectedItem === -1) {
-      return GotandaDiamondMine.getButtonBox('Buy an item', 'gray');
+      return this.getButtonBox("Buy an item", 'gray');
     } else {
-      return GotandaDiamondMine.getButtonBox('Buy this item', 'lime');
+      return this.getButtonBox("Buy this item", 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
     if (this.selectedMine === -1) {
-      return GotandaDiamondMine.getButtonBox('Choose a mine', 'gray');
+      return this.getButtonBox("Choose a mine", 'gray');
     } else {
-      return GotandaDiamondMine.getButtonBox('Choose this mine', 'lime');
+      return this.getButtonBox("Choose this mine", 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     if (this.selectedItem === -1) {
-      return GotandaDiamondMine.getButtonBox('Choose an item', 'gray');
+      return this.getButtonBox("Choose an item", 'gray');
     } else {
-      return GotandaDiamondMine.getButtonBox('Choose this item', 'lime');
+      return this.getButtonBox("Choose this item", 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_PLACE) {
     if (this.selectedPlace === null) {
-      return GotandaDiamondMine.getButtonBox(this.placeBlocked ? 'Blocking!' : 'Choose a place', 'gray');
+      return this.getButtonBox(this.placeBlocked ? "Blocking!" : "Choose a place", 'gray');
     } else {
-      return GotandaDiamondMine.getButtonBox(this.placeBlocked ? 'Blocking!' : 'Choose this place', 'lime');
+      return this.getButtonBox(this.placeBlocked ? "Blocking!" : "Choose this place", 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
     if (this.itemsOnMap.length === 0) {
-      return GotandaDiamondMine.getButtonBox('Preview the path', 'lime');
+      return this.getButtonBox("Preview the path", 'lime');
     } else {
-      return GotandaDiamondMine.getButtonBox('Go to next wave', 'lime');
+      return this.getButtonBox("Go to next wave", 'lime');
     }
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
     if (this.sacrificingItem === -1) {
-      return GotandaDiamondMine.getButtonBox('Replace this item', 'lime');
+      return this.getButtonBox("Replace this item", 'lime');
     } else if (this.canSacrifice) {
-      return GotandaDiamondMine.getButtonBox('Combine these items', 'lime');
+      return this.getButtonBox("Combine these items", 'lime');
     } else {
-      return GotandaDiamondMine.getButtonBox('Cannot combine!', 'gray');
+      return this.getButtonBox("Cannot combine!", 'gray');
     }
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
-    return GotandaDiamondMine.getButtonBox('Now progressing', 'gray');
+    return this.getButtonBox("Now progressing", 'gray');
   } else if (state === GotandaDiamondMine.STATE_DEFEATED) {
-    return GotandaDiamondMine.getButtonBox('You died', 'lime');
+    return this.getButtonBox("You died", 'lime');
   } else if (state === GotandaDiamondMine.STATE_VICTORY) {
-    return GotandaDiamondMine.getButtonBox('Back to the town', 'lime');
+    return this.getButtonBox("Back to the town", 'lime');
   } else {
     return [ GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE ];
   }
@@ -1058,28 +1061,28 @@ GotandaDiamondMine.prototype.getScreenTitle = function () {
   return [].concat(this.getButton(), GotandaDiamondMine.TITLE_SCREEN);
 };
 
-GotandaDiamondMine.getDetailHeroInfo = function (hero_info) { // 27 x 9
-  var output = [ "+-------------------------+".split("") ];
-  output.push( ("|@                        |").split("") );
+GotandaDiamondMine.prototype.getDetailHeroInfo = function (hero_info) { // 27 x 9
+  var output = [ '+-------------------------+'.split('') ];
+  output.push( ('|@                        |').split('') );
   var i = 0;
   for (var key in hero_info ) {
-    output.push( ("|" + hero_info[key] + " " + key + "                           ").split("") );
+    output.push( ('|' + hero_info[key] + ' ' + this.__(key) + '                           ').split('') );
     ++i;
   }
   for (i; i < 6; ++i) {
-    output.push("|                         |".split(""));
+    output.push('|                         |'.split(''));
   }
   for (var i = 1; i < 8; ++i) {
     output[i][26] = '|';
   }
-  output.push("+-------------------------+".split(""));
+  output.push('+-------------------------+'.split(''));
   return output;
 };
 
 GotandaDiamondMine.prototype.getScreenToChooseHero = function () {
   var heroes = [];
   for (var i = 0; i < 5; ++i) {
-    var display_hero = this.heroChoices[i] ? GotandaDiamondMine.getDetailHeroInfo(this.heroChoices[i]) : GotandaDiamondMine.EMPTY_BOX;
+    var display_hero = this.heroChoices[i] ? this.getDetailHeroInfo(this.heroChoices[i]) : GotandaDiamondMine.EMPTY_BOX;
     heroes = heroes.concat(i === this.selectedHero ? display_hero : GotandaDiamondMine.colorScreen(display_hero, 'green'));
   }
   return [].concat(this.getButton(), heroes);
@@ -1089,21 +1092,21 @@ GotandaDiamondMine.prototype.getTownTab = function () {
   var state = this.state;
   if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
     return GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen([
-      "         +-------++-------+".split(''),
-      "  Items  | Shop  || Mine  |".split(''),
-      "         +-------++-------+".split('')
+      '         +-------++-------+'.split(''),
+      '  Items  | Shop  || Mine  |'.split(''),
+      '         +-------++-------+'.split('')
     ], 'gray', 'x', 0, 8), 'lime', 'x', 9, 17), 'lime', 'x', 18, 26);
   } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     return GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen([
-      "+-------+         +-------+".split(''),
-      "| Items |  Shop   | Mine  |".split(''),
-      "--------+         +-------+".split('')
+      '+-------+         +-------+'.split(''),
+      '| Items |  Shop   | Mine  |'.split(''),
+      '--------+         +-------+'.split('')
     ], 'lime', 'x', 0, 8), 'gray', 'x', 9, 17), 'lime', 'x', 18, 26);
   } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
     return GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen([
-      "+-------++-------+         ".split(''),
-      "| Items || Shop  |  Mine   ".split(''),
-      "--------++-------+         ".split('')
+      '+-------++-------+         '.split(''),
+      '| Items || Shop  |  Mine   '.split(''),
+      '--------++-------+         '.split('')
     ], 'lime', 'x', 0, 8), 'lime', 'x', 9, 17), 'gray', 'x', 18, 26);
   }
 };
@@ -1116,54 +1119,54 @@ GotandaDiamondMine.prototype.getScreenAtTownShop = function () {
   return [].concat(this.getButton(), this.getTownTab(), GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray'), this.getStatus(), this.getItemInfo(true));
 };
 
-GotandaDiamondMine.getDetailMineInfo = function (mine_info) { // 27 x 6
-  var output = [ "+-------------------------+".split("") ];
+GotandaDiamondMine.prototype.getDetailMineInfo = function (mine_info) { // 27 x 6
+  var output = [ '+-------------------------+'.split('') ];
   var i = 0;
   for (var key in mine_info ) {
-    output.push( ("|" + mine_info[key] + " " + key + "                           ").split("") );
+    output.push( ('|' + mine_info[key] + ' ' + this.__(key) + '                           ').split('') );
     ++i;
   }
   for (i; i < 4; ++i) {
-    output.push("|                         |".split(""));
+    output.push('|                         |'.split(''));
   }
   for (var i = 1; i <= 4; ++i) {
     output[i][26] = '|';
   }
-  output.push("+-------------------------+".split(""));
+  output.push('+-------------------------+'.split(''));
   return output;
 };
 
 GotandaDiamondMine.prototype.getScreenAtTownMine = function () {
   var mines = [];
   for (var i = 0; i < 7; ++i) {
-    var display_mine = this.mineChoices[i] ? GotandaDiamondMine.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_MINE_BOX;
+    var display_mine = this.mineChoices[i] ? this.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_MINE_BOX;
     mines = mines.concat(i === this.selectedMine ? display_mine : GotandaDiamondMine.colorScreen(display_mine, 'green'));
   }
   return [].concat(this.getButton(), this.getTownTab(), mines);
 };
 
-GotandaDiamondMine.getDetailItemInfo = function (item) { // 27 x 9
-  var output = [ "+-------------------------+".split("") ];
-  output.push( ("|" + item[0] + item[2] + " " + item[1] + "                           ").split("") );
+GotandaDiamondMine.prototype.getDetailItemInfo = function (item) { // 27 x 9
+  var output = [ '+-------------------------+'.split('') ];
+  output.push( ('|' + item[0] + item[2] + ' ' + this.__(item[1]) + '                           ').split('') );
   var i = 0;
   for (var key in item[4] ) {
-    output.push( ("|" + item[4][key] + " " + key + "                           ").split("") );
+    output.push( ('|' + item[4][key] + ' ' + this.__(key) + '                           ').split('') );
     ++i;
   }
   for (i; i < 6; ++i) {
-    output.push("|                         |".split(""));
+    output.push('|                         |'.split(''));
   }
   for (var i = 1; i < 8; ++i) {
     output[i][26] = '|';
   }
-  output.push("+-------------------------+".split(""));
+  output.push('+-------------------------+'.split(''));
   return output;
 };
 
 GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   var items = [];
   for (var i = 0; i < 3; ++i) {
-    var item = this.itemsOnHand[i] ? GotandaDiamondMine.getDetailItemInfo(this.itemsOnHand[i]) : GotandaDiamondMine.EMPTY_BOX;
+    var item = this.itemsOnHand[i] ? this.getDetailItemInfo(this.itemsOnHand[i]) : GotandaDiamondMine.EMPTY_BOX;
     items = items.concat(i === this.selectedItem ? item : GotandaDiamondMine.colorScreen(item, 'green'));
   }
   return [].concat(this.getButton(), this.getWaveInfo(), items, this.getStatus(), this.getItemInfo());
@@ -1256,7 +1259,7 @@ GotandaDiamondMine.prototype.getStatus = function () {
       info_str += hero_param[key] + key + ' ';
     }
   }
-  return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split("") ], 'gray');
+  return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split('') ], 'gray');
 };
 
 GotandaDiamondMine.toItemInfoString = function (item) {
@@ -1283,7 +1286,7 @@ GotandaDiamondMine.prototype.getItemInfo = function () {
         info = GotandaDiamondMine.colorScreen(info, 'gray');
       }
     }
-    info.push(items_to_display.length <= index ? GotandaDiamondMine.EMPTY_LINE : GotandaDiamondMine.toItemInfoString(items_to_display[index]).split(""));
+    info.push(items_to_display.length <= index ? GotandaDiamondMine.EMPTY_LINE : GotandaDiamondMine.toItemInfoString(items_to_display[index]).split(''));
     indexes.push(items_to_display.length <= index ? -1 : index);
   }
 
@@ -1314,15 +1317,15 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
     }
     
     if (second_offset && i === 5) {
-      info.push("---------------------------".split(''));
+      info.push('---------------------------'.split(''));
     } else if (items_on_map.length <= index) {
       info.push(GotandaDiamondMine.EMPTY_LINE);
     } else if (index === this.confirmingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(""), 'aqua', 'line'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(''), 'aqua', 'line'));
     } else if (index === this.sacrificingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(""), 'fuchsia', 'line'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(''), 'fuchsia', 'line'));
     } else {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(""), 'green', 'line'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(''), 'green', 'line'));
     }
     indexes.push(second_offset && i === 5 || items_on_map.length <= index ? -1 : index);
   }

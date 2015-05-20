@@ -14,3 +14,6 @@ android-run: gotandadiamondmine-html5.browserify.js
 gotandadiamondmine-html5.browserify.js: gotandadiamondmine.js gotandadiamondmine-html5.js
 	npm install -d
 	cp gotandadiamondmine-html5.browserify.js www/js/gotandadiamondmine-html5.browserify.js
+
+xgettext:
+	xgettext --extract-all --join-existing --sort-output --language=C --default-domain=__ja gotandadiamondmine.js
