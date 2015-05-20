@@ -6,8 +6,8 @@ var browserify = require('browserify');
 var b = browserify({
   standalone: "GotandaDiamondMine"
 });
-b.add("./gotandadiamondmine.js");
+b.add("./gotandadiamondmine-html5.js");
 b.bundle(function (err, src) {
-  fs.writeFileSync("./gotandadiamondmine.browserify.js", src);
-  console.info("gotandadiamondmine.browserify.js is updated");
+  fs.writeFileSync("./gotandadiamondmine-html5.browserify.js", src);
+  console.info("gotandadiamondmine-html5.browserify.js is updated");
 });

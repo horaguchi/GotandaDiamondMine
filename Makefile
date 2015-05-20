@@ -1,17 +1,16 @@
-browser-run: gotandadiamondmine.browserify.js
+browser-run: gotandadiamondmine-html5.browserify.js
 	cordova run browser
 
 push:
 	git commit -a -m 'Commit for build'
 	git push origin master
 
-android: gotandadiamondmine.browserify.js
+android: gotandadiamondmine-html5.browserify.js
 	cordova build android
 
-android-run: gotandadiamondmine.browserify.js
+android-run: gotandadiamondmine-html5.browserify.js
 	cordova run android
 
-gotandadiamondmine.browserify.js: gotandadiamondmine.js
+gotandadiamondmine-html5.browserify.js: gotandadiamondmine.js gotandadiamondmine-html5.js
 	npm install -d
-	cp gotandadiamondmine.browserify.js www/js/gotandadiamondmine.browserify.js
-	cp gotandadiamondmine-html5.js      www/js/gotandadiamondmine-html5.js
+	cp gotandadiamondmine-html5.browserify.js www/js/gotandadiamondmine-html5.browserify.js

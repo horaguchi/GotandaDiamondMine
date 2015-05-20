@@ -1,5 +1,4 @@
 call npm install -d
-copy gotandadiamondmine.browserify.js www\js\gotandadiamondmine.browserify.js
-copy gotandadiamondmine-html5.js      www\js\gotandadiamondmine-html5.js
+copy gotandadiamondmine-html5.browserify.js www\js\gotandadiamondmine-html5.browserify.js
 cordova run browser
 pause

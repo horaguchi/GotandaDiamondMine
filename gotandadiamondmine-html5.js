@@ -1,3 +1,8 @@
+var GotandaDiamondMine = require("./GotandaDiamondMine");
+
+// for node.js, not for CommonJS
+module.exports = GotandaDiamondMine;
+
 GotandaDiamondMine.TILE_IMAGE_8x8 = new Image();
 GotandaDiamondMine.TILE_IMAGE_8x8.src = "img/8x8.png";
 GotandaDiamondMine.TILE_IMAGE_8x8_COLS = 16;
