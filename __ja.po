@@ -214,7 +214,7 @@ msgstr "リングアーマー"
 
 #: gotandadiamondmine.js:58
 msgid "a rock"
-msgstr ""
+msgstr "石"
 
 #: gotandadiamondmine.js:47 gotandadiamondmine.js:48 gotandadiamondmine.js:49
 #: gotandadiamondmine.js:50
