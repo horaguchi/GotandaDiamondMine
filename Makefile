@@ -16,4 +16,4 @@ gotandadiamondmine-html5.browserify.js: gotandadiamondmine.js gotandadiamondmine
 	cp gotandadiamondmine-html5.browserify.js www/js/gotandadiamondmine-html5.browserify.js
 
 xgettext:
-	xgettext --extract-all --join-existing --sort-output --language=C --default-domain=__ja gotandadiamondmine.js
+	xgettext --extract-all --join-existing --sort-by-file --language=C --default-domain=__ja gotandadiamondmine.js

@@ -35,15 +35,21 @@ GotandaDiamondMine.STATE_DEFEATED    = 'defeated';
 GotandaDiamondMine.STATE_VICTORY     = 'victory';
 
 GotandaDiamondMine.CLASSES = [
-  { 'HP': 10,  '%': 100, '*': 0, 'STR': 3, "deckTemplate": '||||////%%' }
+  { 'HP': 10, 'STR': 3, "Items": '||||////%%' }
 ];
 
 // [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
-  [ '|', "a dagger",            1, [ null, null ], { "Physical Damage":  '1d4',     "Upgrade": '+0%' }, null ],
-  [ '|', "a dagger",            2, [ null, null ], { "Physical Damage":  '2d4',     "Upgrade": '+0%' }, null ],
-  [ '|', "a dagger",            3, [ null, null ], { "Physical Damage":  '5d4',     "Upgrade": '+0%' }, null ],
-  [ '|', "a dagger",            4, [ null, null ], { "Physical Damage": '15d4',     "Upgrade": '+0%' }, null ],
+  [ '|', "a dagger",            1, [ null, null ], { "Physical Damage":  '1d4',     "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            2, [ null, null ], { "Physical Damage":  '1d4+2',   "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            3, [ null, null ], { "Physical Damage":  '2d4',     "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            4, [ null, null ], { "Physical Damage":  '2d4+2',   "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            5, [ null, null ], { "Physical Damage":  '3d4',     "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            6, [ null, null ], { "Physical Damage":  '3d4+2',   "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            7, [ null, null ], { "Physical Damage":  '4d4',     "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            8, [ null, null ], { "Physical Damage":  '4d4+2',   "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",            9, [ null, null ], { "Physical Damage":  '5d4',     "Upgrade": '-5|' }, null ],
+  [ '|', "a dagger",           10, [ null, null ], { "Physical Damage":  '5d4+2',   "Upgrade": '-5|' }, null ],
   [ '|', "a short sword",       1, [ null, null ], { "Physical Damage":  '1d6',     "Upgrade": '+0|' }, null ],
   [ '|', "a short sword",       2, [ null, null ], { "Physical Damage":  '2d6',     "Upgrade": '+0|' }, null ],
   [ '|', "a short sword",       3, [ null, null ], { "Physical Damage":  '5d6',     "Upgrade": '+0|' }, null ],
@@ -86,7 +92,9 @@ GotandaDiamondMine.ITEM_ABBR = {
   "Poison Resistance": 'PR',
   "Physical Damage Buff": 'PDB',
   "Energy": '%',
-  "\\ Luck Bonus": '%LB'
+  "\\ Luck Bonus": '%LB',
+  "HP": 'HP',
+  "*": '*'
 };
 
 GotandaDiamondMine.MAPS = {
@@ -317,7 +325,7 @@ GotandaDiamondMine.prototype.changeState = function (state) {
     for (var i = 0; i < wave[2]; ++i) {
       // waves.push([ 'A', 'monster A', 2, [ null, null ], { HP: Math.round(10 * Math.pow(i, level)) } ]);
       this.units.push([ wave[0], wave[1], -1, [ null, null ], wave[4], { 'Damage': 0 } ]); // 0 is '>', so starts from -1
-      this.unitsWait.push(i * 32);
+      this.unitsWait.push(i * 16);
     }
     this.itemsWait = [];
   }
@@ -499,7 +507,7 @@ GotandaDiamondMine.prototype.pointChooseHero = function (x, y) {
     if (this.selectedHero !== -1) {
       var selected_hero = this.heroChoices[this.selectedHero];
       for (var key in selected_hero) {
-        if (key === 'deckTemplate') {
+        if (key === 'Items') {
           this.createDeckFromTemplate(selected_hero[key]);
         } else {
           this.heroParameter[key] = selected_hero[key];
@@ -794,8 +802,11 @@ GotandaDiamondMine.prototype.pointAnimation = function (x, y) {
         }
       } else { // arrive to @
         unit[3] = [ null, null ];
-        //--this.heroStatus.HP;
-        // TODO: diremond OR hp minus
+        if(unit[5]['Damage'] < unit[4]['HP']) { // unit alive
+          this.heroStatus['Damage'] += this.roll(unit[4]['Physical Damage']);
+        } else { // unit die
+          this.heroStatus['*'] += unit[4]['*'] || 0;
+        }
       }
     }
     pre_unit_pos = unit[2];
@@ -915,10 +926,10 @@ GotandaDiamondMine.prototype.createWaves = function (mine) {
   this.wave = 0;
   var level = mine['level'];
   var waves = this.waves = [
-    [ '*', 'gem', 5, [ null, null ], { HP: 0 } ]
+    [ '*', 'gem', 3, [ null, null ], { HP: 0 } ]
   ];
-  for (var i = 1; i <= 50; ++i) {
-    waves.push([ 'A', 'monster A', 2, [ null, null ], { HP: Math.round(10 * Math.pow(i, level)) } ]);
+  for (var i = 1; i <= mine['waves']; ++i) {
+    waves.push([ 'A', 'monster A', 2, [ null, null ], { 'HP': Math.round(10 * Math.pow(i, level)), 'Physical Damage': '1d4', '*': 1 } ]);
   }
 };
 
@@ -929,9 +940,9 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 GotandaDiamondMine.prototype.createMineChoices = function () {
   // TODO
   this.mineChoices = [
-    { name: 'ABC', level: 1.2, map: 'Flats' },
-    { name: 'ABC', level: 1.3, map: 'Small' },
-    { name: 'ABC', level: 1.4, map: 'Paddy' }
+    { name: 'ABCDE', level: 1.2, map: 'Flats', waves:5 },
+    { name: 'ABCDE', level: 1.3, map: 'Small', waves:20 },
+    { name: 'ABCDE', level: 1.4, map: 'Paddy', waves:30 }
   ];
 };
 
@@ -1004,13 +1015,13 @@ GotandaDiamondMine.prototype.getButton = function () {
     }
   } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
     if (this.selectedItem === -1) {
-      return this.getButtonBox("Destroy an item", 'gray');
+      return this.getButtonBox("Which items to see?", 'gray');
     } else {
       return this.getButtonBox("Destroy this item", 'lime');  
     }
   } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     if (this.selectedItem === -1) {
-      return this.getButtonBox("Buy an item", 'gray');
+      return this.getButtonBox("Which items to buy?", 'gray');
     } else {
       return this.getButtonBox("Buy this item", 'lime');
     }
@@ -1022,7 +1033,7 @@ GotandaDiamondMine.prototype.getButton = function () {
     }
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     if (this.selectedItem === -1) {
-      return this.getButtonBox("Choose an item", 'gray');
+      return this.getButtonBox("Which items to place?", 'gray');
     } else {
       return this.getButtonBox("Choose this item", 'lime');
     }
@@ -1180,8 +1191,12 @@ GotandaDiamondMine.prototype.getScreenDefault = function () {
   return [].concat(this.getButton(), this.getWaveInfo(), this.getMap(), this.getStatus(), this.getItemInfo());
 };
 
-GotandaDiamondMine.toWaveInfoString = function (wave, num) {
-  return num + ')' + wave[2] + wave[0] + ' ' + wave[4].HP + 'HP                           ';
+GotandaDiamondMine.getWaveInfoString = function (wave, num) {
+  var info_str = num + ')' + wave[2] + wave[0];
+  for (var key in wave[4]) {
+    info_str += ' ' + wave[4][key] + GotandaDiamondMine.ITEM_ABBR[key];
+  }
+  return info_str + '                           ';
 };
 
 GotandaDiamondMine.prototype.getUnitsInfoString = function (wave, num) {
@@ -1189,8 +1204,15 @@ GotandaDiamondMine.prototype.getUnitsInfoString = function (wave, num) {
     return unit[5]['Damage'] < unit[4]['HP'];
   });
   var unit = live_units.length === 0 ? this.units[this.units.length - 1] : live_units[0];
-  return num + ')' + live_units.length + wave[0] + ' ' + (unit[4]['HP'] - unit[5]['Damage']) + '/' + unit[4]['HP'] + 'HP                           ';
+  var info_str = num + ')' + live_units.length + wave[0] + ' ' + (unit[4]['HP'] - unit[5]['Damage']) + '/' + unit[4]['HP'] + 'HP';
+  for (var key in wave[4]) {
+    if (key !== 'HP') {
+      info_str += ' ' + wave[4][key] + GotandaDiamondMine.ITEM_ABBR[key];
+    }
+  }
+  return info_str + '                           ';
 };
+
 
 GotandaDiamondMine.prototype.getWaveInfo = function () {
   var state = this.state;
@@ -1203,10 +1225,10 @@ GotandaDiamondMine.prototype.getWaveInfo = function () {
         if (state === GotandaDiamondMine.STATE_ANIMATION) {
           wave_now.push(this.getUnitsInfoString(wave, wave_num).split(''));
         } else {
-          wave_now.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
+          wave_now.push(GotandaDiamondMine.getWaveInfoString(wave, wave_num).split(''));
         }
       } else {
-        wave_next.push(GotandaDiamondMine.toWaveInfoString(wave, wave_num).split(''));
+        wave_next.push(GotandaDiamondMine.getWaveInfoString(wave, wave_num).split(''));
       }
     } else {
       wave_next.push(GotandaDiamondMine.EMPTY_LINE);
