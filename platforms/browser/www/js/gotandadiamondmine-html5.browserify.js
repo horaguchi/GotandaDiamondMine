@@ -41,27 +41,27 @@ GotandaDiamondMine.CLASSES = [
 
 // [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
-  [ '|', "a dagger",            1, [ null, null ], { "Physical Damage":  '1d4',     "Upgrade": '-5|', "Target Depth": 10 }, null ],
-  [ '|', "a dagger",            2, [ null, null ], { "Physical Damage":  '1d4+2',   "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            3, [ null, null ], { "Physical Damage":  '2d4',     "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            4, [ null, null ], { "Physical Damage":  '2d4+2',   "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            5, [ null, null ], { "Physical Damage":  '3d4',     "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            6, [ null, null ], { "Physical Damage":  '3d4+2',   "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            7, [ null, null ], { "Physical Damage":  '4d4',     "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            8, [ null, null ], { "Physical Damage":  '4d4+2',   "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",            9, [ null, null ], { "Physical Damage":  '5d4',     "Upgrade": '-5|' }, null ],
-  [ '|', "a dagger",           10, [ null, null ], { "Physical Damage":  '5d4+2',   "Upgrade": '-5|' }, null ],
-  [ '|', "a short sword",       1, [ null, null ], { "Physical Damage":  '1d6',     "Upgrade": '+0|' }, null ],
-  [ '|', "a short sword",       2, [ null, null ], { "Physical Damage":  '2d6',     "Upgrade": '+0|' }, null ],
-  [ '|', "a short sword",       3, [ null, null ], { "Physical Damage":  '5d6',     "Upgrade": '+0|' }, null ],
-  [ '|', "a short sword",       4, [ null, null ], { "Physical Damage": '15d6',     "Upgrade": '+0|' }, null ],
-  [ '/', "a pole axe",          1, [ null, null ], { "Physical Damage":  '1d8',     "Upgrade": '+0/' }, null ],
-  [ '/', "a pole axe",          2, [ null, null ], { "Physical Damage":  '2d8',     "Upgrade": '+0/' }, null ],
-  [ '/', "a pole axe",          3, [ null, null ], { "Physical Damage":  '5d8',     "Upgrade": '+0/' }, null ],
-  [ '/', "a pole axe",          4, [ null, null ], { "Physical Damage": '15d8',     "Upgrade": '+0/' }, null ],
-  [ '%', "an apple",            1, [ null, null ], { "Energy": '^15',               "Upgrade": '+0%' }, null ],
-  [ '"', "an amulet of damage", 1, [ null, null ], { "Physical Damage Buff": '1.5', "Upgrade": '+0%' }, null ],
-  [ '[', "a ring armour",       1, [ null, null ], { "Armor Class": '+10', "\\ Luck Bonus": '+25', "Upgrade": '+0[' }, null ],
+  [ '|', "a dagger",            1, [ null, null ], { "Physical Damage":  '1d4',     "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            3, [ null, null ], { "Physical Damage":  '2d4',     "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            2, [ null, null ], { "Physical Damage":  '1d4+2',   "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            4, [ null, null ], { "Physical Damage":  '2d4+2',   "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            5, [ null, null ], { "Physical Damage":  '3d4',     "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            6, [ null, null ], { "Physical Damage":  '3d4+2',   "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            7, [ null, null ], { "Physical Damage":  '4d4',     "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            8, [ null, null ], { "Physical Damage":  '4d4+2',   "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",            9, [ null, null ], { "Physical Damage":  '5d4',     "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a dagger",           10, [ null, null ], { "Physical Damage":  '5d4+2',   "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a short sword",       1, [ null, null ], { "Physical Damage":  '1d6',     "Upgrade": '+0|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a short sword",       2, [ null, null ], { "Physical Damage":  '2d6',     "Upgrade": '+0|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a short sword",       3, [ null, null ], { "Physical Damage":  '5d6',     "Upgrade": '+0|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '|', "a short sword",       4, [ null, null ], { "Physical Damage": '15d6',     "Upgrade": '+0|', "Target Depth": 10, "Price": 10 }, null ],
+  [ '/', "a pole axe",          1, [ null, null ], { "Physical Damage":  '1d8',     "Upgrade": '+0/', "Target Depth": 10, "Price": 10 }, null ],
+  [ '/', "a pole axe",          2, [ null, null ], { "Physical Damage":  '2d8',     "Upgrade": '+0/', "Target Depth": 10, "Price": 10 }, null ],
+  [ '/', "a pole axe",          3, [ null, null ], { "Physical Damage":  '5d8',     "Upgrade": '+0/', "Target Depth": 10, "Price": 10 }, null ],
+  [ '/', "a pole axe",          4, [ null, null ], { "Physical Damage": '15d8',     "Upgrade": '+0/', "Target Depth": 10, "Price": 10 }, null ],
+  [ '%', "an apple",            1, [ null, null ], { "Energy": '^15',               "Upgrade": '+0%', "Target Depth": 10, "Price": 10 }, null ],
+  [ '"', "an amulet of damage", 1, [ null, null ], { "Physical Damage Buff": '1.5', "Upgrade": '+0%', "Target Depth": 10, "Price": 10 }, null ],
+  [ '[', "a ring armour",       1, [ null, null ], { "Armor Class": '+10', "\\ Luck Bonus": '+25', "Upgrade": '+0[', "Target Depth": 10, "Price": 10 }, null ],
   [ '`', "a rock",              1, [ null, null ], { "Upgrade": '+0`' }, null ]
 ];
 
@@ -1164,7 +1164,7 @@ GotandaDiamondMine.prototype.getScreenAtTownItems = function () {
 };
 
 GotandaDiamondMine.prototype.getScreenAtTownShop = function () {
-  var selected_item = this.selectedItem === -1 ? GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray') : this.getDetailItemInfo(this.itemsInShop[this.selectedItem]);
+  var selected_item = this.selectedItem === -1 ? GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray') : this.getDetailItemInfo(this.itemsInShop[this.selectedItem], true);
   return [].concat(this.getButton(), this.getTownTab(), selected_item, this.getStatus(), this.getItemInfo(true));
 };
 
@@ -1194,12 +1194,12 @@ GotandaDiamondMine.prototype.getScreenAtTownMine = function () {
   return [].concat(this.getButton(), this.getTownTab(), mines);
 };
 
-GotandaDiamondMine.prototype.getDetailItemInfo = function (item) { // 27 x 9
+GotandaDiamondMine.prototype.getDetailItemInfo = function (item, in_shop) { // 27 x 9
   var output = [ '+-------------------------+'.split('') ];
   output.push( ('|' + item[0] + item[2] + ' ' + this.__(item[1]) + '                           ').split('') );
   var i = 0;
   for (var key in item[4] ) {
-    if (key !== 'Target Depth') {
+    if (key !== 'Target Depth' && key !== 'Price') {
       output.push( ('|' + item[4][key] + ' ' + this.__(key) + '                           ').split('') );
       ++i;
     }
@@ -1211,6 +1211,13 @@ GotandaDiamondMine.prototype.getDetailItemInfo = function (item) { // 27 x 9
     output[i][26] = '|';
   }
   output.push('+-------------------------+'.split(''));
+  
+  if (in_shop) {
+    var price_str_arr = (' ' + item[4]['Price'] + '*').split('');
+    for (var x = 26 - price_str_arr.length; x < 26; ++x) {
+      output[7][x] = price_str_arr[x - 26 + price_str_arr.length];
+    }
+  }
   return output;
 };
 
@@ -1323,14 +1330,21 @@ GotandaDiamondMine.prototype.getStatus = function () {
   return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split('') ], 'gray');
 };
 
-GotandaDiamondMine.toItemInfoString = function (item) {
+GotandaDiamondMine.getItemInfoLine = function (item, in_shop) {
   var info_str = item[0] + item[2];
   for (var key in item[4]) {
-    if (key !== 'Target Depth') {
+    if (key !== 'Target Depth' && key !== 'Price') {
       info_str += ' ' + item[4][key] + GotandaDiamondMine.ITEM_ABBR[key];
     }
   }
-  return info_str + '                           ';
+  var output = (info_str + '                           ').split('');
+  if (in_shop) {
+    var price_str_arr = (' ' + item[4]['Price'] + '*').split('');
+    for (var x = 27 - price_str_arr.length; x < 27; ++x) {
+      output[x] = price_str_arr[x - 27 + price_str_arr.length];
+    }
+  }
+  return [ output ];
 };
 
 GotandaDiamondMine.prototype.getItemInfo = function () {
@@ -1347,13 +1361,13 @@ GotandaDiamondMine.prototype.getItemInfo = function () {
       info.push(GotandaDiamondMine.EMPTY_LINE);
       indexes.push(-1);
     } else {
-      var info_line = GotandaDiamondMine.toItemInfoString(items_to_display[index]).split('');
+      var info_line = GotandaDiamondMine.getItemInfoLine(items_to_display[index], state === GotandaDiamondMine.STATE_TOWN_SHOP);
       if (state === GotandaDiamondMine.STATE_PLACE && index !== this.placingItem) {
-        info_line = GotandaDiamondMine.colorScreen([ info_line ], 'gray')[0];
+        info_line = GotandaDiamondMine.colorScreen(info_line, 'gray');
       } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-        info_line = GotandaDiamondMine.colorScreen([ info_line ], index !== this.selectedItem ? 'green' : 'aqua')[0];
+        info_line = GotandaDiamondMine.colorScreen(info_line, index !== this.selectedItem ? 'green' : 'aqua');
       }
-      info.push(info_line);
+      info.push(info_line[0]);
       indexes.push(index);
     }
   }
@@ -1389,11 +1403,11 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
     } else if (items_on_map.length <= index) {
       info.push(GotandaDiamondMine.EMPTY_LINE);
     } else if (index === this.confirmingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(''), 'aqua', 'line'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'aqua'));
     } else if (index === this.sacrificingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(''), 'fuchsia', 'line'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'fuchsia'));
     } else {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.toItemInfoString(items_on_map[index]).split(''), 'green', 'line'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'green'));
     }
     indexes.push(second_offset && i === 5 || items_on_map.length <= index ? -1 : index);
   }
