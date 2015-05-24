@@ -1398,11 +1398,11 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
     } else if (items_on_map.length <= index) {
       info.push(GotandaDiamondMine.EMPTY_LINE);
     } else if (index === this.confirmingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'aqua'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'aqua')[0]);
     } else if (index === this.sacrificingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'fuchsia'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'fuchsia')[0]);
     } else {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'green'));
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'green')[0]);
     }
     indexes.push(second_offset && i === 5 || items_on_map.length <= index ? -1 : index);
   }
