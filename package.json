@@ -31,7 +31,7 @@
   "dependencies": {
     "pathfinding": "0.4.17",
     "chance": "0.7.5",
-    "blessed": "0.1.56"
+    "blessed": "0.1.60"
   },
   "devDependencies": {
     "po2json": "0.4.1",
