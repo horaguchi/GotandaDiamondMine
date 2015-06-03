@@ -3,12 +3,6 @@ var GotandaDiamondMine = require('./GotandaDiamondMine');
 // for node.js, not for CommonJS
 module.exports = GotandaDiamondMine;
 
-GotandaDiamondMine.TILE_IMAGE_8x8 = new Image();
-GotandaDiamondMine.TILE_IMAGE_8x8.src = 'img/8x8.png';
-GotandaDiamondMine.TILE_IMAGE_8x8_COLS = 16;
-GotandaDiamondMine.TILE_IMAGE_JA = new Image();
-GotandaDiamondMine.TILE_IMAGE_JA.src = 'img/misaki_gothic.png';
-GotandaDiamondMine.TILE_IMAGE_JA_MAP = require('./__ja_tile_map.json');
 GotandaDiamondMine.prototype.initialCanvas = function (element) {
   this.canvasElement = document.createElement('canvas');
   element.appendChild(this.canvasElement);
@@ -74,29 +68,27 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
     return; // nothing to do
   }
 
-  this.fontX = 8; this.fontY = 8;
-  this.canvasElement.setAttribute('width',  this.fontX * 27);
-  this.canvasElement.setAttribute('height', this.fontY * 48);
-  this.canvasElement.parentElement.style.width  = (this.fontX * 27) + 'px';
-  this.canvasElement.parentElement.style.height = (this.fontY * 48) + 'px';
-  this.canvasElement.style.width  = (this.fontX * 27) + 'px';
-  this.canvasElement.style.height = (this.fontY * 48) + 'px';
-  this.canvasContext = this.canvasElement.getContext("2d");
-  this.canvasContext.fillStyle = this.fillStyle = 'white';
-
-  var viewport = document.querySelector("meta[name=viewport]");
-  var new_width = Math.round(this.fontY * 48 * window.innerWidth / window.innerHeight);
-  viewport.setAttribute('content', 'width=' + (new_width - new_width % 10 + 10));
+  var device_pixel_ratio = window.devicePixelRatio || 1;
   this.maxWidth  = window.innerWidth;
   this.maxHeight = window.innerHeight;
+  var font_size = Math.min(Math.floor(this.maxWidth * device_pixel_ratio / 27), Math.floor(this.maxHeight * device_pixel_ratio / 48));
+  this.fontX = font_size; this.fontY = font_size;
+  this.devicePixelRatio = device_pixel_ratio;
+
+  this.canvasElement.setAttribute('width',  this.fontX * 27);
+  this.canvasElement.setAttribute('height', this.fontY * 48);
+  this.canvasElement.parentElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
+  this.canvasElement.parentElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
+  this.canvasElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
+  this.canvasElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
+  this.canvasContext = this.canvasElement.getContext("2d");
+  this.canvasContext.fillStyle = this.fillStyle = 'white';
+  this.canvasContext.font = this.fontY + 'px Monospace';
+  this.canvasContext.textAlign = 'center';
+  this.canvasContext.textBaseline = 'middle';
 
   // initial drawing
   this.draw(true);
-};
-
-GotandaDiamondMine.prototype.pointHTML = function (x, y) {
-  var mx = Math.floor(x / this.fontX), my = Math.floor(y / this.fontY);
-  return this.point(mx, my);
 };
 
 GotandaDiamondMine.prototype.getPointFromHTML = function (x, y, mode) {
@@ -108,7 +100,7 @@ GotandaDiamondMine.prototype.getPointFromHTML = function (x, y, mode) {
     px = (touch_start[0] + x) / 2;
     py = (touch_start[1] + y) / 2;
   }
-  var mx = Math.floor(px / this.fontX), my = Math.floor(py / this.fontY);
+  var mx = Math.floor(px * this.devicePixelRatio / this.fontX), my = Math.floor(py * this.devicePixelRatio / this.fontY);
   return [ mx, my ];
 };
 
@@ -136,19 +128,12 @@ GotandaDiamondMine.prototype.draw = function (initial) {
           context.fillStyle = this.fillStyle = 'white';
         }
       }
-      if (this.tileImage === '8x8') {
-        var char_code = str.charCodeAt(0);
-        var dx = dw * x, dy = dh * y;
-        var sx = char_code % GotandaDiamondMine.TILE_IMAGE_8x8_COLS;
-        var sy = Math.floor(char_code / GotandaDiamondMine.TILE_IMAGE_8x8_COLS);
-        context.fillRect(dx, dy, dw, dh);
-        context.drawImage(GotandaDiamondMine.TILE_IMAGE_8x8, sx * dw, sy * dh, dw, dh, dx, dy, dw, dh);
-      } else {
-        var dx = dw * x, dy = dh * y;
-        var sx = GotandaDiamondMine.TILE_IMAGE_JA_MAP[str][0], sy = GotandaDiamondMine.TILE_IMAGE_JA_MAP[str][1];
-        context.fillRect(dx, dy, dw, dh);
-        context.drawImage(GotandaDiamondMine.TILE_IMAGE_JA, sx, sy, dw, dh, dx, dy, dw, dh);
-      }
+      var dx = dw * x, dy = dh * y;
+      var px = dw * 0.5 + dx, py = dh * 0.5 + dy;
+      context.fillStyle = 'black';
+      context.fillRect(dx, dy, dw, dh);
+      context.fillStyle = this.fillStyle;
+      context.fillText(str, px, py);
     }
   }
   this.oldScreen = screen.map(function (row) { return row.concat(); });

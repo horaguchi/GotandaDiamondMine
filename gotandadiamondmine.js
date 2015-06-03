@@ -588,10 +588,10 @@ GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
     this.selectedMine = 4;
     return true;
   } else if (0 <= x && x <= 26 && 36 <= y && y <= 41 && 6 <= this.mineChoices.length) { // Mine 6
-    this.selectedMine = 4;
+    this.selectedMine = 5;
     return true;
   } else if (0 <= x && x <= 26 && 42 <= y && y <= 47 && 7 <= this.mineChoices.length) { // Mine 7
-    this.selectedMine = 4;
+    this.selectedMine = 6;
     return true;
   } else if (0 <= x && x <= 26 && 0 <= y && y <= 2) { // Choose a hero
     if (this.selectedMine !== -1) {
