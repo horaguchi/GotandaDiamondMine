@@ -8247,10 +8247,16 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.canvasElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
   this.canvasElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
   this.canvasContext = this.canvasElement.getContext("2d");
-  this.canvasContext.fillStyle = this.fillStyle = 'white';
-  this.canvasContext.font = this.fontY + 'px Monospace';
-  this.canvasContext.textAlign = 'center';
-  this.canvasContext.textBaseline = 'middle';
+  this.canvasContext.fillStyle = 'black';
+
+  this.fontCanvasElement = document.createElement('canvas');
+  this.fontCanvasElement.setAttribute('width',  this.fontX);
+  this.fontCanvasElement.setAttribute('height', this.fontY);
+  this.fontCanvasContext = this.fontCanvasElement.getContext("2d");
+  this.fontCanvasContext.fillStyle = this.fillStyle = 'white';
+  this.fontCanvasContext.font = this.fontY + 'px Monospace';
+  this.fontCanvasContext.textAlign = 'center';
+  this.fontCanvasContext.textBaseline = 'middle';
 
   // initial drawing
   this.draw(true);
@@ -8273,6 +8279,8 @@ GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
 GotandaDiamondMine.prototype.draw = function (initial) {
   var screen = this.getScreen();
   var context = this.canvasContext;
+  var font_canvas = this.fontCanvasElement;
+  var font_context = this.fontCanvasContext;
   var old_screen = initial ? null : this.oldScreen;
   var dw = this.fontX, dh = this.fontY;
   for (var y = 0; y < 48; ++y) {
@@ -8285,20 +8293,20 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
       if (colors) {
         if (this.fillStyle !== colors[1]) {
-          context.fillStyle = this.fillStyle = colors[1];
+          font_context.fillStyle = this.fillStyle = colors[1];
         }
         str = colors[2];
       } else {
         if (this.fillStyle !== 'white') {
-          context.fillStyle = this.fillStyle = 'white';
+          font_context.fillStyle = this.fillStyle = 'white';
         }
       }
       var dx = dw * x, dy = dh * y;
-      var px = dw * 0.5 + dx, py = dh * 0.5 + dy;
-      context.fillStyle = 'black';
+      var px = dw * 0.5, py = dh * 0.5;
       context.fillRect(dx, dy, dw, dh);
-      context.fillStyle = this.fillStyle;
-      context.fillText(str, px, py);
+      font_context.clearRect(0, 0, dw, dh);
+      font_context.fillText(str, px, py);
+      context.drawImage(font_canvas, dx, dy);
     }
   }
   this.oldScreen = screen.map(function (row) { return row.concat(); });
