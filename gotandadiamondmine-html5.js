@@ -62,6 +62,7 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
 
 };
 
+GotandaDiamondMine.FONT_MAP_SIZE = 50;
 GotandaDiamondMine.prototype.resizeCanvas = function () {
   if (this.maxWidth  && this.maxWidth  === window.innerWidth &&
       this.maxHeight && this.maxHeight === window.innerHeight) {
@@ -72,6 +73,10 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.maxWidth  = window.innerWidth;
   this.maxHeight = window.innerHeight;
   var font_size = Math.min(Math.floor(this.maxWidth * device_pixel_ratio / 27), Math.floor(this.maxHeight * device_pixel_ratio / 48));
+  if (this.fontX === font_size && this.fontY === font_size) {
+    return; // nothing to do
+  }
+
   this.fontX = font_size; this.fontY = font_size;
   this.devicePixelRatio = device_pixel_ratio;
 
@@ -92,6 +97,15 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.fontCanvasContext.font = this.fontY + 'px Monospace';
   this.fontCanvasContext.textAlign = 'center';
   this.fontCanvasContext.textBaseline = 'middle';
+
+  this.fontMap = {};
+  this.fontLength = 0;
+  this.fontMapCanvasElement = document.createElement('canvas');
+  this.fontMapCanvasElement.setAttribute('width',  this.fontX * GotandaDiamondMine.FONT_MAP_SIZE);
+  this.fontMapCanvasElement.setAttribute('height', this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+  this.fontMapCanvasContext = this.fontMapCanvasElement.getContext("2d");
+  this.fontMapCanvasContext.fillStyle = 'black';
+  this.fontMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
 
   // initial drawing
   this.draw(true);
@@ -114,10 +128,27 @@ GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
 GotandaDiamondMine.prototype.draw = function (initial) {
   var screen = this.getScreen();
   var context = this.canvasContext;
-  var font_canvas = this.fontCanvasElement;
+  var font_element = this.fontCanvasElement;
   var font_context = this.fontCanvasContext;
+  var font_map = this.fontMap;
+  var font_map_element = this.fontMapCanvasElement;
+  var font_map_context = this.fontMapCanvasContext;
   var old_screen = initial ? null : this.oldScreen;
   var dw = this.fontX, dh = this.fontY;
+  var get_str_pos = function (str, color) {
+    if (font_map[str + ' ' + color]) {
+      return font_map[str + ' ' + color];
+    }
+    ++this.fontLength;
+    var dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw, dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
+    var px = dw * 0.5, py = dh * 0.5;
+    font_context.clearRect(0, 0, dw, dh);
+    font_context.fillStyle = color;
+    font_context.fillText(str, px, py);
+    font_map_context.drawImage(font_element, dx, dy);
+    font_map[str + ' ' + color] = [ dx, dy ];
+    return font_map[str + ' ' + color];
+  };
   for (var y = 0; y < 48; ++y) {
     for (var x = 0; x < 27; ++x) {
       var str = screen[y][x];
@@ -128,20 +159,20 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
       if (colors) {
         if (this.fillStyle !== colors[1]) {
-          font_context.fillStyle = this.fillStyle = colors[1];
+          //font_context.fillStyle = this.fillStyle = colors[1];
+          this.fillStyle = colors[1];
         }
         str = colors[2];
       } else {
         if (this.fillStyle !== 'white') {
-          font_context.fillStyle = this.fillStyle = 'white';
+          //font_context.fillStyle = this.fillStyle = 'white';
+          this.fillStyle = 'white';
         }
       }
       var dx = dw * x, dy = dh * y;
-      var px = dw * 0.5, py = dh * 0.5;
-      context.fillRect(dx, dy, dw, dh);
-      font_context.clearRect(0, 0, dw, dh);
-      font_context.fillText(str, px, py);
-      context.drawImage(font_canvas, dx, dy);
+      var s = get_str_pos.call(this, str, this.fillStyle);
+      var sx = s[0], sy = s[1], sw = dw, sh = dh;
+      context.drawImage(font_map_element, sx, sy, sw, sh, dx, dy, dw, dh);
     }
   }
   this.oldScreen = screen.map(function (row) { return row.concat(); });
