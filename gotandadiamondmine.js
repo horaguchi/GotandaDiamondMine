@@ -958,9 +958,9 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 GotandaDiamondMine.prototype.createMineChoices = function () {
   // TODO
   this.mineChoices = [
-    { name: 'ABCDE', depth: this.depth + 100, map: 'Flats', waves:5 },
-    { name: 'ABCDE', depth: this.depth + 200, map: 'Small', waves:20 },
-    { name: 'ABCDE', depth: this.depth + 300, map: 'Paddy', waves:30 }
+    { depth: this.depth + 100, map: 'Flats', waves:5 },
+    { depth: this.depth + 200, map: 'Small', waves:20 },
+    { depth: this.depth + 300, map: 'Paddy', waves:30 }
   ];
 };
 
