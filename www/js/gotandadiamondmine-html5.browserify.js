@@ -1496,7 +1496,7 @@ GotandaDiamondMine.prototype.initialCanvas = function (element) {
 
 };
 
-GotandaDiamondMine.FONT_MAP_SIZE = 50;
+GotandaDiamondMine.FONT_MAP_SIZE = 50; // font map is for pre-rendering area, 50 x 50 is reserved in the default
 GotandaDiamondMine.prototype.resizeCanvas = function () {
   if (this.maxWidth  && this.maxWidth  === window.innerWidth &&
       this.maxHeight && this.maxHeight === window.innerHeight) {
@@ -1506,19 +1506,19 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   var device_pixel_ratio = window.devicePixelRatio || 1;
   this.maxWidth  = window.innerWidth;
   this.maxHeight = window.innerHeight;
-  var font_size = Math.min(Math.floor(this.maxWidth * device_pixel_ratio / 27), Math.floor(this.maxHeight * device_pixel_ratio / 48));
-  if (this.fontX === font_size && this.fontY === font_size) {
+  var font_size = Math.min(Math.floor(this.maxWidth * device_pixel_ratio / 54), Math.floor(this.maxHeight * device_pixel_ratio / 48 / 2));
+  if (this.fontX === font_size && this.fontY === font_size * 2) {
     return; // nothing to do
   }
 
-  this.fontX = font_size; this.fontY = font_size;
+  this.fontX = font_size; this.fontY = font_size * 2;
   this.devicePixelRatio = device_pixel_ratio;
 
-  this.canvasElement.setAttribute('width',  this.fontX * 27);
+  this.canvasElement.setAttribute('width',  this.fontX * 54);
   this.canvasElement.setAttribute('height', this.fontY * 48);
-  this.canvasElement.parentElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
+  this.canvasElement.parentElement.style.width  = Math.round(this.fontX * 54 / device_pixel_ratio) + 'px';
   this.canvasElement.parentElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
-  this.canvasElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
+  this.canvasElement.style.width  = Math.round(this.fontX * 54 / device_pixel_ratio) + 'px';
   this.canvasElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
   this.canvasContext = this.canvasElement.getContext("2d");
   this.canvasContext.fillStyle = 'black';
@@ -1584,9 +1584,9 @@ GotandaDiamondMine.prototype.draw = function (initial) {
     return font_map[str + ' ' + color];
   };
   for (var y = 0; y < 48; ++y) {
-    for (var x = 0; x < 27; ++x) {
+    for (var x = 0; x < 54; ++x) {
       var str = screen[y][x];
-      if (old_screen && str === old_screen[y][x]) {
+      if (!str || (old_screen && str === old_screen[y][x])) { // null or nor-updated
         continue;
       }
 
