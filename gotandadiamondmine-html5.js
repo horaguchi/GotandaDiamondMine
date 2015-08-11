@@ -98,7 +98,7 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.fontCanvasContext.textAlign = 'center';
   this.fontCanvasContext.textBaseline = 'middle';
 
-  this.fontMap = {};
+  this.fontMap = {}; // str + ' ' + color : [ dx, dy ]
   this.fontLength = 0;
   this.fontMapCanvasElement = document.createElement('canvas');
   this.fontMapCanvasElement.setAttribute('width',  this.fontX * GotandaDiamondMine.FONT_MAP_SIZE);
@@ -162,13 +162,11 @@ GotandaDiamondMine.prototype.draw = function (initial) {
       var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
       if (colors) {
         if (this.fillStyle !== colors[1]) {
-          //font_context.fillStyle = this.fillStyle = colors[1];
           this.fillStyle = colors[1];
         }
         str = colors[2];
       } else {
         if (this.fillStyle !== 'white') {
-          //font_context.fillStyle = this.fillStyle = 'white';
           this.fillStyle = 'white';
         }
       }
