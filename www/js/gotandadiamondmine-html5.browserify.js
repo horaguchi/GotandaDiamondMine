@@ -1586,7 +1586,10 @@ GotandaDiamondMine.prototype.draw = function (initial) {
   for (var y = 0; y < 48; ++y) {
     for (var x = 0; x < 54; ++x) {
       var str = screen[y][x];
-      if (!str || (old_screen && str === old_screen[y][x])) { // null or nor-updated
+      if (!str) { // null is blank
+        str = screen[y][x] = ' ';
+      }
+      if (old_screen && str === old_screen[y][x]) { // nor-updated
         continue;
       }
 
