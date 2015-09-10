@@ -1410,7 +1410,8 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
   return info;
 };
 
-},{"./__":2,"chance":9,"pathfinding":10}],2:[function(require,module,exports){
+},{"./__":2,"chance":9,"pathfinding":11}],2:[function(require,module,exports){
+var EAW = require('eastasianwidth');
 var __ = function (str) {
   return __[__.lang] && __[__.lang][str] || str;
 };
@@ -1423,13 +1424,27 @@ __.getLang = function () {
   return this.lang;
 };
 
-__.ja = require('./__ja.po2json.json');
-//__.ab = require('__ab');
-//__.cd = require('__cd');
+__.loadLang = function (lang_name, lang_map, is_east_asia) {
+  var obj = {};
+  for (var key in lang_map) {
+    obj[key] = lang_map[key].split("").map(function (str) {
+      var eaw = EAW.eastAsianWidth(str);
+      if (eaw === "W" || eaw === "F" || (is_east_asia && eaw === "A")) {
+        str = "\0" + str; // add null-str for full-width
+      }
+      return str;
+    }).join("");
+  }
+  __[lang_name] = obj;
+};
+
+__.loadLang("ja", require('./__ja.po2json.json'), true);
+
+//__.loadLang("ab", require('./__ab.po2json.json'));
 
 module.exports = __;
 
-},{"./__ja.po2json.json":3}],3:[function(require,module,exports){
+},{"./__ja.po2json.json":3,"eastasianwidth":10}],3:[function(require,module,exports){
 module.exports={"Items":"","Physical Damage":"物理ダメージ","Upgrade":"でアップグレード","a dagger":"ダガー","a short sword":"短剣","a pole axe":"ポールアックス","Energy":"エネルギー","an apple":"リンゴ","Physical Damage Buff":"物理ダメージUP","an amulet of damage":"ダメージの首飾り","Armor Class":"アーマークラス","\\ Luck Bonus":"\\ 幸運UP","a ring armour":"リングアーマー","a rock":"石","An edged weapon":"","A hafted weapon":"","A pole weapon":"","Fire Damage":"","Cold Damage":"","Lightning Damage":"","Poison Damage":"","All Resistance":"","Fire Resistance":"","Cold Resistance":"","Lightning Resistance":"","Poison Resistance":"","HP":"HP","*":"*","Small":"小部屋","Flats":"平野","Paddy":"田んぼ","Play":"プレイする","Choose a hero":"ヒーローを選んでください","Choose this hero":"このヒーローを選ぶ","Which items to see?":"どのアイテムを見ますか？","Destroy this item":"このアイテムを壊す","Which items to buy?":"どのアイテムを買いますか？","Buy this item":"このアイテムを買う","Choose a mine":"発掘場所を選んでください","Choose this mine":"この場所にする","Which items to place?":"アイテムを選んでください","Choose this item":"このアイテムにする","Blocking!":"経路がありません","Choose a place":"場所を選んでください","Choose this place":"この場所にする","Preview the path":"経路をプレビューする","Go to next wave":"次のウェーブ","Replace this item":"アイテムを再配置する","Combine these items":"アイテムを結合する","Cannot combine!":"その組み合わせは結合できません！","Now progressing":"処理中です…","You died":"あなたは死にました","Back to the town":"町に戻ります"}
 },{}],4:[function(require,module,exports){
 var GotandaDiamondMine = require('./GotandaDiamondMine');
@@ -1541,6 +1556,25 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.fontMapCanvasContext.fillStyle = 'black';
   this.fontMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
 
+  // for full width
+  this.fontFWCanvasElement = document.createElement('canvas');
+  this.fontFWCanvasElement.setAttribute('width',  this.fontX * 2);
+  this.fontFWCanvasElement.setAttribute('height', this.fontY);
+  this.fontFWCanvasContext = this.fontFWCanvasElement.getContext("2d");
+  this.fontFWCanvasContext.fillStyle = this.fillStyle = 'white';
+  this.fontFWCanvasContext.font = this.fontY + 'px Monospace';
+  this.fontFWCanvasContext.textAlign = 'center';
+  this.fontFWCanvasContext.textBaseline = 'middle';
+
+  this.fontFWMap = {}; // str + ' ' + color : [ dx, dy ]
+  this.fontFWLength = 0;
+  this.fontFWMapCanvasElement = document.createElement('canvas');
+  this.fontFWMapCanvasElement.setAttribute('width',  this.fontX * GotandaDiamondMine.FONT_MAP_SIZE * 2);
+  this.fontFWMapCanvasElement.setAttribute('height', this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+  this.fontFWMapCanvasContext = this.fontFWMapCanvasElement.getContext("2d");
+  this.fontFWMapCanvasContext.fillStyle = 'black';
+  this.fontFWMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE * 2, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+
   // initial drawing
   this.draw(true);
 };
@@ -1562,34 +1596,62 @@ GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
 GotandaDiamondMine.prototype.draw = function (initial) {
   var screen = this.getScreen();
   var context = this.canvasContext;
+
+  // for half width
   var font_element = this.fontCanvasElement;
   var font_context = this.fontCanvasContext;
   var font_map = this.fontMap;
   var font_map_element = this.fontMapCanvasElement;
   var font_map_context = this.fontMapCanvasContext;
+
+  // for full width
+  var fontfw_element = this.fontFWCanvasElement;
+  var fontfw_context = this.fontFWCanvasContext;
+  var fontfw_map = this.fontFWMap;
+  var fontfw_map_element = this.fontFWMapCanvasElement;
+  var fontfw_map_context = this.fontFWMapCanvasContext;
+
   var old_screen = initial ? null : this.oldScreen;
   var dw = this.fontX, dh = this.fontY;
-  var get_str_pos = function (str, color) {
+
+  var get_str_pos = function (str, color, full_width) {
     if (font_map[str + ' ' + color]) {
       return font_map[str + ' ' + color];
     }
-    ++this.fontLength;
-    var dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw, dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
-    var px = dw * 0.5, py = dh * 0.5;
-    font_context.clearRect(0, 0, dw, dh);
-    font_context.fillStyle = color;
-    font_context.fillText(str, px, py);
-    font_map_context.drawImage(font_element, dx, dy);
-    font_map[str + ' ' + color] = [ dx, dy ];
-    return font_map[str + ' ' + color];
+    var dx, dy, px, py;
+    if (full_width) {
+      ++this.fontFWLength;
+      dx = (this.fontFWLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw * 2; dy = Math.floor(this.fontFWLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
+      px = dw; py = dh * 0.5;
+      fontfw_context.clearRect(0, 0, dw * 2, dh);
+      fontfw_context.fillStyle = color;
+      fontfw_context.fillText(str, px, py);
+      fontfw_map_context.drawImage(fontfw_element, dx, dy);
+      fontfw_map[str + ' ' + color] = [ dx, dy ];
+      return fontfw_map[str + ' ' + color];
+    } else {
+      ++this.fontLength;
+      dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw; dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
+      px = dw * 0.5; py = dh * 0.5;
+      font_context.clearRect(0, 0, dw, dh);
+      font_context.fillStyle = color;
+      font_context.fillText(str, px, py);
+      font_map_context.drawImage(font_element, dx, dy);
+      font_map[str + ' ' + color] = [ dx, dy ];
+      return font_map[str + ' ' + color];
+    }
   };
+  var before_full_width = false;
   for (var y = 0; y < 48; ++y) {
     for (var x = 0; x < 54; ++x) {
       var str = screen[y][x];
       if (!str) { // null is blank
         str = screen[y][x] = ' ';
       }
-      if (old_screen && str === old_screen[y][x]) { // nor-updated
+      var full_width = before_full_width;
+      before_full_width = (str.indexOf("\0") !== -1); // if str have null-str, next str is full-width
+
+      if (old_screen && str === old_screen[y][x]) { // no-updated
         continue;
       }
 
@@ -1604,10 +1666,10 @@ GotandaDiamondMine.prototype.draw = function (initial) {
           this.fillStyle = 'white';
         }
       }
-      var dx = dw * x, dy = dh * y;
-      var s = get_str_pos.call(this, str, this.fillStyle);
-      var sx = s[0], sy = s[1], sw = dw, sh = dh;
-      context.drawImage(font_map_element, sx, sy, sw, sh, dx, dy, dw, dh);
+      var dx = dw * (full_width ? x - 1 : x), dy = dh * y;
+      var s = get_str_pos.call(this, str, this.fillStyle, full_width);
+      var sx = s[0], sy = s[1], sw = (full_width ? dw * 2 : dw ), sh = dh;
+      context.drawImage((full_width ? fontfw_map_element : font_map_element), sx, sy, sw, sh, dx, dy, (full_width ? dw * 2 : dw), dh);
     }
   }
   this.oldScreen = screen.map(function (row) { return row.concat(); });
@@ -3339,7 +3401,7 @@ module.exports = isArray || function (val) {
 
 },{}],9:[function(require,module,exports){
 (function (Buffer){
-//  Chance.js 0.7.6
+//  Chance.js 0.7.7
 //  http://chancejs.com
 //  (c) 2013 Victor Quinn
 //  Chance may be freely distributed or modified under the MIT license.
@@ -3399,7 +3461,7 @@ module.exports = isArray || function (val) {
         return this;
     }
 
-    Chance.prototype.VERSION = "0.7.6";
+    Chance.prototype.VERSION = "0.7.7";
 
     // Random helper functions
     function initOptions(options, defaults) {
@@ -3803,12 +3865,23 @@ module.exports = isArray || function (val) {
         options = initOptions(options);
 
         var words = options.words || this.natural({min: 12, max: 18}),
+            punctuation = options.punctuation,
             text, word_array = this.n(this.word, words);
 
         text = word_array.join(' ');
-
-        // Capitalize first letter of sentence, add period at end
-        text = this.capitalize(text) + '.';
+        
+        // Capitalize first letter of sentence
+        text = this.capitalize(text);
+        
+        // Make sure punctuation has a usable value
+        if (punctuation !== false && !/^[\.\?;!:]$/.test(punctuation)) {
+            punctuation = '.';
+        }
+        
+        // Add punctuation mark
+        if (punctuation) {
+            text += punctuation;
+        }
 
         return text;
     };
@@ -3936,6 +4009,19 @@ module.exports = isArray || function (val) {
 
     Chance.prototype.last = function () {
         return this.pick(this.get("lastNames"));
+    };
+    
+    Chance.prototype.israelId=function(){
+        var x=this.string({pool: '0123456789',length:8});
+        var y=0;
+        for (var i=0;i<x.length;i++){
+            var thisDigit=  x[i] *  (i/2===parseInt(i/2) ? 1 : 2);
+            thisDigit=this.pad(thisDigit,2).toString();
+            thisDigit=parseInt(thisDigit[0]) + parseInt(thisDigit[1]);
+            y=y+thisDigit;
+        }
+        x=x+(10-parseInt(y.toString().slice(-1))).toString().slice(-1);
+        return x;
     };
 
     Chance.prototype.mrz = function (options) {
@@ -4390,7 +4476,7 @@ module.exports = isArray || function (val) {
     };
 
     Chance.prototype.depth = function (options) {
-        options = initOptions(options, {fixed: 5, min: -2550, max: 0});
+        options = initOptions(options, {fixed: 5, min: -10994, max: 0});
         return this.floating({
             min: options.min,
             max: options.max,
@@ -4521,15 +4607,18 @@ module.exports = isArray || function (val) {
     };
 
     Chance.prototype.states = function (options) {
-        options = initOptions(options);
+        options = initOptions(options, { us_states_and_dc: true });
 
         var states,
             us_states_and_dc = this.get("us_states_and_dc"),
             territories = this.get("territories"),
             armed_forces = this.get("armed_forces");
 
-        states = us_states_and_dc;
+        states = [];
 
+        if (options.us_states_and_dc) {
+            states = states.concat(us_states_and_dc);
+        }
         if (options.territories) {
             states = states.concat(territories);
         }
@@ -4837,6 +4926,55 @@ module.exports = isArray || function (val) {
     };
 
     // -- End Finance
+
+    // -- Regional
+
+    Chance.prototype.pl_pesel = function () {
+        var number = this.natural({min: 1, max: 9999999999});
+        var arr = this.pad(number, 10).split('');
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = parseInt(arr[i]);
+        }
+
+        var controlNumber = (1 * arr[0] + 3 * arr[1] + 7 * arr[2] + 9 * arr[3] + 1 * arr[4] + 3 * arr[5] + 7 * arr[6] + 9 * arr[7] + 1 * arr[8] + 3 * arr[9]) % 10;
+        if(controlNumber !== 0) {
+            controlNumber = 10 - controlNumber;
+        }
+
+        return arr.join('') + controlNumber;
+    };
+
+    Chance.prototype.pl_nip = function () {
+        var number = this.natural({min: 1, max: 999999999});
+        var arr = this.pad(number, 9).split('');
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = parseInt(arr[i]);
+        }
+
+        var controlNumber = (6 * arr[0] + 5 * arr[1] + 7 * arr[2] + 2 * arr[3] + 3 * arr[4] + 4 * arr[5] + 5 * arr[6] + 6 * arr[7] + 7 * arr[8]) % 11;
+        if(controlNumber === 10) {
+            return this.pl_nip();
+        }
+
+        return arr.join('') + controlNumber;
+    };
+
+    Chance.prototype.pl_regon = function () {
+        var number = this.natural({min: 1, max: 99999999});
+        var arr = this.pad(number, 8).split('');
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = parseInt(arr[i]);
+        }
+
+        var controlNumber = (8 * arr[0] + 9 * arr[1] + 2 * arr[2] + 3 * arr[3] + 4 * arr[4] + 5 * arr[5] + 6 * arr[6] + 7 * arr[7]) % 11;
+        if(controlNumber === 10) {
+            controlNumber = 0;
+        }
+
+        return arr.join('') + controlNumber;
+    };
+
+    // -- End Regional
 
     // -- Miscellaneous --
 
@@ -5855,12 +5993,285 @@ module.exports = isArray || function (val) {
 
 }).call(this,require("buffer").Buffer)
 },{"buffer":5}],10:[function(require,module,exports){
+var eaw = exports;
+
+eaw.eastAsianWidth = function(character) {
+  var x = character.charCodeAt(0);
+  var y = (character.length == 2) ? character.charCodeAt(1) : 0;
+  var codePoint = x;
+  if ((0xD800 <= x && x <= 0xDBFF) && (0xDC00 <= y && y <= 0xDFFF)) {
+    x &= 0x3FF;
+    y &= 0x3FF;
+    codePoint = (x << 10) | y;
+    codePoint += 0x10000;
+  }
+
+  if ((0x3000 == codePoint) ||
+      (0xFF01 <= codePoint && codePoint <= 0xFF60) ||
+      (0xFFE0 <= codePoint && codePoint <= 0xFFE6)) {
+    return 'F';
+  }
+  if ((0x20A9 == codePoint) ||
+      (0xFF61 <= codePoint && codePoint <= 0xFFBE) ||
+      (0xFFC2 <= codePoint && codePoint <= 0xFFC7) ||
+      (0xFFCA <= codePoint && codePoint <= 0xFFCF) ||
+      (0xFFD2 <= codePoint && codePoint <= 0xFFD7) ||
+      (0xFFDA <= codePoint && codePoint <= 0xFFDC) ||
+      (0xFFE8 <= codePoint && codePoint <= 0xFFEE)) {
+    return 'H';
+  }
+  if ((0x1100 <= codePoint && codePoint <= 0x115F) ||
+      (0x11A3 <= codePoint && codePoint <= 0x11A7) ||
+      (0x11FA <= codePoint && codePoint <= 0x11FF) ||
+      (0x2329 <= codePoint && codePoint <= 0x232A) ||
+      (0x2E80 <= codePoint && codePoint <= 0x2E99) ||
+      (0x2E9B <= codePoint && codePoint <= 0x2EF3) ||
+      (0x2F00 <= codePoint && codePoint <= 0x2FD5) ||
+      (0x2FF0 <= codePoint && codePoint <= 0x2FFB) ||
+      (0x3001 <= codePoint && codePoint <= 0x303E) ||
+      (0x3041 <= codePoint && codePoint <= 0x3096) ||
+      (0x3099 <= codePoint && codePoint <= 0x30FF) ||
+      (0x3105 <= codePoint && codePoint <= 0x312D) ||
+      (0x3131 <= codePoint && codePoint <= 0x318E) ||
+      (0x3190 <= codePoint && codePoint <= 0x31BA) ||
+      (0x31C0 <= codePoint && codePoint <= 0x31E3) ||
+      (0x31F0 <= codePoint && codePoint <= 0x321E) ||
+      (0x3220 <= codePoint && codePoint <= 0x3247) ||
+      (0x3250 <= codePoint && codePoint <= 0x32FE) ||
+      (0x3300 <= codePoint && codePoint <= 0x4DBF) ||
+      (0x4E00 <= codePoint && codePoint <= 0xA48C) ||
+      (0xA490 <= codePoint && codePoint <= 0xA4C6) ||
+      (0xA960 <= codePoint && codePoint <= 0xA97C) ||
+      (0xAC00 <= codePoint && codePoint <= 0xD7A3) ||
+      (0xD7B0 <= codePoint && codePoint <= 0xD7C6) ||
+      (0xD7CB <= codePoint && codePoint <= 0xD7FB) ||
+      (0xF900 <= codePoint && codePoint <= 0xFAFF) ||
+      (0xFE10 <= codePoint && codePoint <= 0xFE19) ||
+      (0xFE30 <= codePoint && codePoint <= 0xFE52) ||
+      (0xFE54 <= codePoint && codePoint <= 0xFE66) ||
+      (0xFE68 <= codePoint && codePoint <= 0xFE6B) ||
+      (0x1B000 <= codePoint && codePoint <= 0x1B001) ||
+      (0x1F200 <= codePoint && codePoint <= 0x1F202) ||
+      (0x1F210 <= codePoint && codePoint <= 0x1F23A) ||
+      (0x1F240 <= codePoint && codePoint <= 0x1F248) ||
+      (0x1F250 <= codePoint && codePoint <= 0x1F251) ||
+      (0x20000 <= codePoint && codePoint <= 0x2F73F) ||
+      (0x2B740 <= codePoint && codePoint <= 0x2FFFD) ||
+      (0x30000 <= codePoint && codePoint <= 0x3FFFD)) {
+    return 'W';
+  }
+  if ((0x0020 <= codePoint && codePoint <= 0x007E) ||
+      (0x00A2 <= codePoint && codePoint <= 0x00A3) ||
+      (0x00A5 <= codePoint && codePoint <= 0x00A6) ||
+      (0x00AC == codePoint) ||
+      (0x00AF == codePoint) ||
+      (0x27E6 <= codePoint && codePoint <= 0x27ED) ||
+      (0x2985 <= codePoint && codePoint <= 0x2986)) {
+    return 'Na';
+  }
+  if ((0x00A1 == codePoint) ||
+      (0x00A4 == codePoint) ||
+      (0x00A7 <= codePoint && codePoint <= 0x00A8) ||
+      (0x00AA == codePoint) ||
+      (0x00AD <= codePoint && codePoint <= 0x00AE) ||
+      (0x00B0 <= codePoint && codePoint <= 0x00B4) ||
+      (0x00B6 <= codePoint && codePoint <= 0x00BA) ||
+      (0x00BC <= codePoint && codePoint <= 0x00BF) ||
+      (0x00C6 == codePoint) ||
+      (0x00D0 == codePoint) ||
+      (0x00D7 <= codePoint && codePoint <= 0x00D8) ||
+      (0x00DE <= codePoint && codePoint <= 0x00E1) ||
+      (0x00E6 == codePoint) ||
+      (0x00E8 <= codePoint && codePoint <= 0x00EA) ||
+      (0x00EC <= codePoint && codePoint <= 0x00ED) ||
+      (0x00F0 == codePoint) ||
+      (0x00F2 <= codePoint && codePoint <= 0x00F3) ||
+      (0x00F7 <= codePoint && codePoint <= 0x00FA) ||
+      (0x00FC == codePoint) ||
+      (0x00FE == codePoint) ||
+      (0x0101 == codePoint) ||
+      (0x0111 == codePoint) ||
+      (0x0113 == codePoint) ||
+      (0x011B == codePoint) ||
+      (0x0126 <= codePoint && codePoint <= 0x0127) ||
+      (0x012B == codePoint) ||
+      (0x0131 <= codePoint && codePoint <= 0x0133) ||
+      (0x0138 == codePoint) ||
+      (0x013F <= codePoint && codePoint <= 0x0142) ||
+      (0x0144 == codePoint) ||
+      (0x0148 <= codePoint && codePoint <= 0x014B) ||
+      (0x014D == codePoint) ||
+      (0x0152 <= codePoint && codePoint <= 0x0153) ||
+      (0x0166 <= codePoint && codePoint <= 0x0167) ||
+      (0x016B == codePoint) ||
+      (0x01CE == codePoint) ||
+      (0x01D0 == codePoint) ||
+      (0x01D2 == codePoint) ||
+      (0x01D4 == codePoint) ||
+      (0x01D6 == codePoint) ||
+      (0x01D8 == codePoint) ||
+      (0x01DA == codePoint) ||
+      (0x01DC == codePoint) ||
+      (0x0251 == codePoint) ||
+      (0x0261 == codePoint) ||
+      (0x02C4 == codePoint) ||
+      (0x02C7 == codePoint) ||
+      (0x02C9 <= codePoint && codePoint <= 0x02CB) ||
+      (0x02CD == codePoint) ||
+      (0x02D0 == codePoint) ||
+      (0x02D8 <= codePoint && codePoint <= 0x02DB) ||
+      (0x02DD == codePoint) ||
+      (0x02DF == codePoint) ||
+      (0x0300 <= codePoint && codePoint <= 0x036F) ||
+      (0x0391 <= codePoint && codePoint <= 0x03A1) ||
+      (0x03A3 <= codePoint && codePoint <= 0x03A9) ||
+      (0x03B1 <= codePoint && codePoint <= 0x03C1) ||
+      (0x03C3 <= codePoint && codePoint <= 0x03C9) ||
+      (0x0401 == codePoint) ||
+      (0x0410 <= codePoint && codePoint <= 0x044F) ||
+      (0x0451 == codePoint) ||
+      (0x2010 == codePoint) ||
+      (0x2013 <= codePoint && codePoint <= 0x2016) ||
+      (0x2018 <= codePoint && codePoint <= 0x2019) ||
+      (0x201C <= codePoint && codePoint <= 0x201D) ||
+      (0x2020 <= codePoint && codePoint <= 0x2022) ||
+      (0x2024 <= codePoint && codePoint <= 0x2027) ||
+      (0x2030 == codePoint) ||
+      (0x2032 <= codePoint && codePoint <= 0x2033) ||
+      (0x2035 == codePoint) ||
+      (0x203B == codePoint) ||
+      (0x203E == codePoint) ||
+      (0x2074 == codePoint) ||
+      (0x207F == codePoint) ||
+      (0x2081 <= codePoint && codePoint <= 0x2084) ||
+      (0x20AC == codePoint) ||
+      (0x2103 == codePoint) ||
+      (0x2105 == codePoint) ||
+      (0x2109 == codePoint) ||
+      (0x2113 == codePoint) ||
+      (0x2116 == codePoint) ||
+      (0x2121 <= codePoint && codePoint <= 0x2122) ||
+      (0x2126 == codePoint) ||
+      (0x212B == codePoint) ||
+      (0x2153 <= codePoint && codePoint <= 0x2154) ||
+      (0x215B <= codePoint && codePoint <= 0x215E) ||
+      (0x2160 <= codePoint && codePoint <= 0x216B) ||
+      (0x2170 <= codePoint && codePoint <= 0x2179) ||
+      (0x2189 == codePoint) ||
+      (0x2190 <= codePoint && codePoint <= 0x2199) ||
+      (0x21B8 <= codePoint && codePoint <= 0x21B9) ||
+      (0x21D2 == codePoint) ||
+      (0x21D4 == codePoint) ||
+      (0x21E7 == codePoint) ||
+      (0x2200 == codePoint) ||
+      (0x2202 <= codePoint && codePoint <= 0x2203) ||
+      (0x2207 <= codePoint && codePoint <= 0x2208) ||
+      (0x220B == codePoint) ||
+      (0x220F == codePoint) ||
+      (0x2211 == codePoint) ||
+      (0x2215 == codePoint) ||
+      (0x221A == codePoint) ||
+      (0x221D <= codePoint && codePoint <= 0x2220) ||
+      (0x2223 == codePoint) ||
+      (0x2225 == codePoint) ||
+      (0x2227 <= codePoint && codePoint <= 0x222C) ||
+      (0x222E == codePoint) ||
+      (0x2234 <= codePoint && codePoint <= 0x2237) ||
+      (0x223C <= codePoint && codePoint <= 0x223D) ||
+      (0x2248 == codePoint) ||
+      (0x224C == codePoint) ||
+      (0x2252 == codePoint) ||
+      (0x2260 <= codePoint && codePoint <= 0x2261) ||
+      (0x2264 <= codePoint && codePoint <= 0x2267) ||
+      (0x226A <= codePoint && codePoint <= 0x226B) ||
+      (0x226E <= codePoint && codePoint <= 0x226F) ||
+      (0x2282 <= codePoint && codePoint <= 0x2283) ||
+      (0x2286 <= codePoint && codePoint <= 0x2287) ||
+      (0x2295 == codePoint) ||
+      (0x2299 == codePoint) ||
+      (0x22A5 == codePoint) ||
+      (0x22BF == codePoint) ||
+      (0x2312 == codePoint) ||
+      (0x2460 <= codePoint && codePoint <= 0x24E9) ||
+      (0x24EB <= codePoint && codePoint <= 0x254B) ||
+      (0x2550 <= codePoint && codePoint <= 0x2573) ||
+      (0x2580 <= codePoint && codePoint <= 0x258F) ||
+      (0x2592 <= codePoint && codePoint <= 0x2595) ||
+      (0x25A0 <= codePoint && codePoint <= 0x25A1) ||
+      (0x25A3 <= codePoint && codePoint <= 0x25A9) ||
+      (0x25B2 <= codePoint && codePoint <= 0x25B3) ||
+      (0x25B6 <= codePoint && codePoint <= 0x25B7) ||
+      (0x25BC <= codePoint && codePoint <= 0x25BD) ||
+      (0x25C0 <= codePoint && codePoint <= 0x25C1) ||
+      (0x25C6 <= codePoint && codePoint <= 0x25C8) ||
+      (0x25CB == codePoint) ||
+      (0x25CE <= codePoint && codePoint <= 0x25D1) ||
+      (0x25E2 <= codePoint && codePoint <= 0x25E5) ||
+      (0x25EF == codePoint) ||
+      (0x2605 <= codePoint && codePoint <= 0x2606) ||
+      (0x2609 == codePoint) ||
+      (0x260E <= codePoint && codePoint <= 0x260F) ||
+      (0x2614 <= codePoint && codePoint <= 0x2615) ||
+      (0x261C == codePoint) ||
+      (0x261E == codePoint) ||
+      (0x2640 == codePoint) ||
+      (0x2642 == codePoint) ||
+      (0x2660 <= codePoint && codePoint <= 0x2661) ||
+      (0x2663 <= codePoint && codePoint <= 0x2665) ||
+      (0x2667 <= codePoint && codePoint <= 0x266A) ||
+      (0x266C <= codePoint && codePoint <= 0x266D) ||
+      (0x266F == codePoint) ||
+      (0x269E <= codePoint && codePoint <= 0x269F) ||
+      (0x26BE <= codePoint && codePoint <= 0x26BF) ||
+      (0x26C4 <= codePoint && codePoint <= 0x26CD) ||
+      (0x26CF <= codePoint && codePoint <= 0x26E1) ||
+      (0x26E3 == codePoint) ||
+      (0x26E8 <= codePoint && codePoint <= 0x26FF) ||
+      (0x273D == codePoint) ||
+      (0x2757 == codePoint) ||
+      (0x2776 <= codePoint && codePoint <= 0x277F) ||
+      (0x2B55 <= codePoint && codePoint <= 0x2B59) ||
+      (0x3248 <= codePoint && codePoint <= 0x324F) ||
+      (0xE000 <= codePoint && codePoint <= 0xF8FF) ||
+      (0xFE00 <= codePoint && codePoint <= 0xFE0F) ||
+      (0xFFFD == codePoint) ||
+      (0x1F100 <= codePoint && codePoint <= 0x1F10A) ||
+      (0x1F110 <= codePoint && codePoint <= 0x1F12D) ||
+      (0x1F130 <= codePoint && codePoint <= 0x1F169) ||
+      (0x1F170 <= codePoint && codePoint <= 0x1F19A) ||
+      (0xE0100 <= codePoint && codePoint <= 0xE01EF) ||
+      (0xF0000 <= codePoint && codePoint <= 0xFFFFD) ||
+      (0x100000 <= codePoint && codePoint <= 0x10FFFD)) {
+    return 'A';
+  }
+
+  return 'N';
+};
+
+eaw.characterLength = function(character) {
+  var code = this.eastAsianWidth(character);
+  if (code == 'F' || code == 'W' || code == 'A') {
+    return 2;
+  } else {
+    return 1;
+  }
+};
+
+eaw.length = function(string) {
+  var len = 0;
+  for (var i = 0; i < string.length; i++) {
+    len = len + this.characterLength(string.charAt(i));
+  }
+  return len;
+};
+
+},{}],11:[function(require,module,exports){
 module.exports = require('./src/PathFinding');
 
-},{"./src/PathFinding":13}],11:[function(require,module,exports){
+},{"./src/PathFinding":14}],12:[function(require,module,exports){
 module.exports = require('./lib/heap');
 
-},{"./lib/heap":12}],12:[function(require,module,exports){
+},{"./lib/heap":13}],13:[function(require,module,exports){
 // Generated by CoffeeScript 1.8.0
 (function() {
   var Heap, defaultCmp, floor, heapify, heappop, heappush, heappushpop, heapreplace, insort, min, nlargest, nsmallest, updateItem, _siftdown, _siftup;
@@ -6231,7 +6642,7 @@ module.exports = require('./lib/heap');
 
 }).call(this);
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports = {
     'Heap'                      : require('heap'),
     'Node'                      : require('./core/Node'),
@@ -6251,7 +6662,7 @@ module.exports = {
     'JumpPointFinder'           : require('./finders/JumpPointFinder'),
 };
 
-},{"./core/DiagonalMovement":14,"./core/Grid":15,"./core/Heuristic":16,"./core/Node":17,"./core/Util":18,"./finders/AStarFinder":19,"./finders/BestFirstFinder":20,"./finders/BiAStarFinder":21,"./finders/BiBestFirstFinder":22,"./finders/BiBreadthFirstFinder":23,"./finders/BiDijkstraFinder":24,"./finders/BreadthFirstFinder":25,"./finders/DijkstraFinder":26,"./finders/IDAStarFinder":27,"./finders/JumpPointFinder":32,"heap":11}],14:[function(require,module,exports){
+},{"./core/DiagonalMovement":15,"./core/Grid":16,"./core/Heuristic":17,"./core/Node":18,"./core/Util":19,"./finders/AStarFinder":20,"./finders/BestFirstFinder":21,"./finders/BiAStarFinder":22,"./finders/BiBestFirstFinder":23,"./finders/BiBreadthFirstFinder":24,"./finders/BiDijkstraFinder":25,"./finders/BreadthFirstFinder":26,"./finders/DijkstraFinder":27,"./finders/IDAStarFinder":28,"./finders/JumpPointFinder":33,"heap":12}],15:[function(require,module,exports){
 var DiagonalMovement = {
     Always: 1,
     Never: 2,
@@ -6260,7 +6671,7 @@ var DiagonalMovement = {
 };
 
 module.exports = DiagonalMovement;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var Node = require('./Node');
 var DiagonalMovement = require('./DiagonalMovement');
 
@@ -6509,7 +6920,7 @@ Grid.prototype.clone = function() {
 
 module.exports = Grid;
 
-},{"./DiagonalMovement":14,"./Node":17}],16:[function(require,module,exports){
+},{"./DiagonalMovement":15,"./Node":18}],17:[function(require,module,exports){
 /**
  * @namespace PF.Heuristic
  * @description A collection of heuristic functions.
@@ -6559,7 +6970,7 @@ module.exports = {
 
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * A node in grid. 
  * This class holds some basic information about a node and custom 
@@ -6589,7 +7000,7 @@ function Node(x, y, walkable) {
 
 module.exports = Node;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * Backtrace according to the parent records and return the path.
  * (including both start and end nodes)
@@ -6837,7 +7248,7 @@ function compressPath(path) {
 }
 exports.compressPath = compressPath;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var Heap       = require('heap');
 var Util       = require('../core/Util');
 var Heuristic  = require('../core/Heuristic');
@@ -6964,7 +7375,7 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = AStarFinder;
 
-},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Util":18,"heap":11}],20:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":12}],21:[function(require,module,exports){
 var AStarFinder = require('./AStarFinder');
 
 /**
@@ -6992,7 +7403,7 @@ BestFirstFinder.prototype.constructor = BestFirstFinder;
 
 module.exports = BestFirstFinder;
 
-},{"./AStarFinder":19}],21:[function(require,module,exports){
+},{"./AStarFinder":20}],22:[function(require,module,exports){
 var Heap       = require('heap');
 var Util       = require('../core/Util');
 var Heuristic  = require('../core/Heuristic');
@@ -7171,7 +7582,7 @@ BiAStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = BiAStarFinder;
 
-},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Util":18,"heap":11}],22:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":12}],23:[function(require,module,exports){
 var BiAStarFinder = require('./BiAStarFinder');
 
 /**
@@ -7199,7 +7610,7 @@ BiBestFirstFinder.prototype.constructor = BiBestFirstFinder;
 
 module.exports = BiBestFirstFinder;
 
-},{"./BiAStarFinder":21}],23:[function(require,module,exports){
+},{"./BiAStarFinder":22}],24:[function(require,module,exports){
 var Util = require('../core/Util');
 var DiagonalMovement = require('../core/DiagonalMovement');
 
@@ -7314,7 +7725,7 @@ BiBreadthFirstFinder.prototype.findPath = function(startX, startY, endX, endY, g
 
 module.exports = BiBreadthFirstFinder;
 
-},{"../core/DiagonalMovement":14,"../core/Util":18}],24:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Util":19}],25:[function(require,module,exports){
 var BiAStarFinder = require('./BiAStarFinder');
 
 /**
@@ -7338,7 +7749,7 @@ BiDijkstraFinder.prototype.constructor = BiDijkstraFinder;
 
 module.exports = BiDijkstraFinder;
 
-},{"./BiAStarFinder":21}],25:[function(require,module,exports){
+},{"./BiAStarFinder":22}],26:[function(require,module,exports){
 var Util = require('../core/Util');
 var DiagonalMovement = require('../core/DiagonalMovement');
 
@@ -7417,7 +7828,7 @@ BreadthFirstFinder.prototype.findPath = function(startX, startY, endX, endY, gri
 
 module.exports = BreadthFirstFinder;
 
-},{"../core/DiagonalMovement":14,"../core/Util":18}],26:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Util":19}],27:[function(require,module,exports){
 var AStarFinder = require('./AStarFinder');
 
 /**
@@ -7441,7 +7852,7 @@ DijkstraFinder.prototype.constructor = DijkstraFinder;
 
 module.exports = DijkstraFinder;
 
-},{"./AStarFinder":19}],27:[function(require,module,exports){
+},{"./AStarFinder":20}],28:[function(require,module,exports){
 var Util       = require('../core/Util');
 var Heuristic  = require('../core/Heuristic');
 var Node       = require('../core/Node');
@@ -7651,7 +8062,7 @@ IDAStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = IDAStarFinder;
 
-},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Node":17,"../core/Util":18}],28:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Node":18,"../core/Util":19}],29:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -7802,7 +8213,7 @@ JPFAlwaysMoveDiagonally.prototype._findNeighbors = function(node) {
 
 module.exports = JPFAlwaysMoveDiagonally;
 
-},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],29:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"./JumpPointFinderBase":34}],30:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -7959,7 +8370,7 @@ JPFMoveDiagonallyIfAtMostOneObstacle.prototype._findNeighbors = function(node) {
 
 module.exports = JPFMoveDiagonallyIfAtMostOneObstacle;
 
-},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],30:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"./JumpPointFinderBase":34}],31:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -8135,7 +8546,7 @@ JPFMoveDiagonallyIfNoObstacles.prototype._findNeighbors = function(node) {
 
 module.exports = JPFMoveDiagonallyIfNoObstacles;
 
-},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],31:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"./JumpPointFinderBase":34}],32:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -8257,7 +8668,7 @@ JPFNeverMoveDiagonally.prototype._findNeighbors = function(node) {
 
 module.exports = JPFNeverMoveDiagonally;
 
-},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],32:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"./JumpPointFinderBase":34}],33:[function(require,module,exports){
 /**
  * @author aniero / https://github.com/aniero
  */
@@ -8290,7 +8701,7 @@ function JumpPointFinder(opt) {
 
 module.exports = JumpPointFinder;
 
-},{"../core/DiagonalMovement":14,"./JPFAlwaysMoveDiagonally":28,"./JPFMoveDiagonallyIfAtMostOneObstacle":29,"./JPFMoveDiagonallyIfNoObstacles":30,"./JPFNeverMoveDiagonally":31}],33:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"./JPFAlwaysMoveDiagonally":29,"./JPFMoveDiagonallyIfAtMostOneObstacle":30,"./JPFMoveDiagonallyIfNoObstacles":31,"./JPFNeverMoveDiagonally":32}],34:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -8406,5 +8817,5 @@ JumpPointFinderBase.prototype._identifySuccessors = function(node) {
 
 module.exports = JumpPointFinderBase;
 
-},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Util":18,"heap":11}]},{},[4])(4)
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":12}]},{},[4])(4)
 });

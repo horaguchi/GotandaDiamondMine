@@ -107,6 +107,25 @@ GotandaDiamondMine.prototype.resizeCanvas = function () {
   this.fontMapCanvasContext.fillStyle = 'black';
   this.fontMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
 
+  // for full width
+  this.fontFWCanvasElement = document.createElement('canvas');
+  this.fontFWCanvasElement.setAttribute('width',  this.fontX * 2);
+  this.fontFWCanvasElement.setAttribute('height', this.fontY);
+  this.fontFWCanvasContext = this.fontFWCanvasElement.getContext("2d");
+  this.fontFWCanvasContext.fillStyle = this.fillStyle = 'white';
+  this.fontFWCanvasContext.font = this.fontY + 'px Monospace';
+  this.fontFWCanvasContext.textAlign = 'center';
+  this.fontFWCanvasContext.textBaseline = 'middle';
+
+  this.fontFWMap = {}; // str + ' ' + color : [ dx, dy ]
+  this.fontFWLength = 0;
+  this.fontFWMapCanvasElement = document.createElement('canvas');
+  this.fontFWMapCanvasElement.setAttribute('width',  this.fontX * GotandaDiamondMine.FONT_MAP_SIZE * 2);
+  this.fontFWMapCanvasElement.setAttribute('height', this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+  this.fontFWMapCanvasContext = this.fontFWMapCanvasElement.getContext("2d");
+  this.fontFWMapCanvasContext.fillStyle = 'black';
+  this.fontFWMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE * 2, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+
   // initial drawing
   this.draw(true);
 };
@@ -128,34 +147,62 @@ GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
 GotandaDiamondMine.prototype.draw = function (initial) {
   var screen = this.getScreen();
   var context = this.canvasContext;
+
+  // for half width
   var font_element = this.fontCanvasElement;
   var font_context = this.fontCanvasContext;
   var font_map = this.fontMap;
   var font_map_element = this.fontMapCanvasElement;
   var font_map_context = this.fontMapCanvasContext;
+
+  // for full width
+  var fontfw_element = this.fontFWCanvasElement;
+  var fontfw_context = this.fontFWCanvasContext;
+  var fontfw_map = this.fontFWMap;
+  var fontfw_map_element = this.fontFWMapCanvasElement;
+  var fontfw_map_context = this.fontFWMapCanvasContext;
+
   var old_screen = initial ? null : this.oldScreen;
   var dw = this.fontX, dh = this.fontY;
-  var get_str_pos = function (str, color) {
+
+  var get_str_pos = function (str, color, full_width) {
     if (font_map[str + ' ' + color]) {
       return font_map[str + ' ' + color];
     }
-    ++this.fontLength;
-    var dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw, dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
-    var px = dw * 0.5, py = dh * 0.5;
-    font_context.clearRect(0, 0, dw, dh);
-    font_context.fillStyle = color;
-    font_context.fillText(str, px, py);
-    font_map_context.drawImage(font_element, dx, dy);
-    font_map[str + ' ' + color] = [ dx, dy ];
-    return font_map[str + ' ' + color];
+    var dx, dy, px, py;
+    if (full_width) {
+      ++this.fontFWLength;
+      dx = (this.fontFWLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw * 2; dy = Math.floor(this.fontFWLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
+      px = dw; py = dh * 0.5;
+      fontfw_context.clearRect(0, 0, dw * 2, dh);
+      fontfw_context.fillStyle = color;
+      fontfw_context.fillText(str, px, py);
+      fontfw_map_context.drawImage(fontfw_element, dx, dy);
+      fontfw_map[str + ' ' + color] = [ dx, dy ];
+      return fontfw_map[str + ' ' + color];
+    } else {
+      ++this.fontLength;
+      dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw; dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
+      px = dw * 0.5; py = dh * 0.5;
+      font_context.clearRect(0, 0, dw, dh);
+      font_context.fillStyle = color;
+      font_context.fillText(str, px, py);
+      font_map_context.drawImage(font_element, dx, dy);
+      font_map[str + ' ' + color] = [ dx, dy ];
+      return font_map[str + ' ' + color];
+    }
   };
+  var before_full_width = false;
   for (var y = 0; y < 48; ++y) {
     for (var x = 0; x < 54; ++x) {
       var str = screen[y][x];
       if (!str) { // null is blank
         str = screen[y][x] = ' ';
       }
-      if (old_screen && str === old_screen[y][x]) { // nor-updated
+      var full_width = before_full_width;
+      before_full_width = (str.indexOf("\0") !== -1); // if str have null-str, next str is full-width
+
+      if (old_screen && str === old_screen[y][x]) { // no-updated
         continue;
       }
 
@@ -170,10 +217,10 @@ GotandaDiamondMine.prototype.draw = function (initial) {
           this.fillStyle = 'white';
         }
       }
-      var dx = dw * x, dy = dh * y;
-      var s = get_str_pos.call(this, str, this.fillStyle);
-      var sx = s[0], sy = s[1], sw = dw, sh = dh;
-      context.drawImage(font_map_element, sx, sy, sw, sh, dx, dy, dw, dh);
+      var dx = dw * (full_width ? x - 1 : x), dy = dh * y;
+      var s = get_str_pos.call(this, str, this.fillStyle, full_width);
+      var sx = s[0], sy = s[1], sw = (full_width ? dw * 2 : dw ), sh = dh;
+      context.drawImage((full_width ? fontfw_map_element : font_map_element), sx, sy, sw, sh, dx, dy, (full_width ? dw * 2 : dw), dh);
     }
   }
   this.oldScreen = screen.map(function (row) { return row.concat(); });
