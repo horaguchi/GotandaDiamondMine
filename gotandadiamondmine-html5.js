@@ -188,5 +188,5 @@ GotandaDiamondMine.prototype.startAnimation = function () {
       clearInterval(gdm.animationInterval);
       gdm.animationInterval = null;
     }
-  }, 20);
+  }, 10);
 };
