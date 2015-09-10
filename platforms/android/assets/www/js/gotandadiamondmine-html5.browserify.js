@@ -959,9 +959,9 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 GotandaDiamondMine.prototype.createMineChoices = function () {
   // TODO
   this.mineChoices = [
-    { name: 'ABCDE', depth: this.depth + 100, map: 'Flats', waves:5 },
-    { name: 'ABCDE', depth: this.depth + 200, map: 'Small', waves:20 },
-    { name: 'ABCDE', depth: this.depth + 300, map: 'Paddy', waves:30 }
+    { depth: this.depth + 100, map: 'Flats', waves:5 },
+    { depth: this.depth + 200, map: 'Small', waves:20 },
+    { depth: this.depth + 300, map: 'Paddy', waves:30 }
   ];
 };
 
@@ -1410,7 +1410,7 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
   return info;
 };
 
-},{"./__":2,"chance":8,"pathfinding":9}],2:[function(require,module,exports){
+},{"./__":2,"chance":9,"pathfinding":10}],2:[function(require,module,exports){
 var __ = function (str) {
   return __[__.lang] && __[__.lang][str] || str;
 };
@@ -1432,6 +1432,199 @@ module.exports = __;
 },{"./__ja.po2json.json":3}],3:[function(require,module,exports){
 module.exports={"Items":"","Physical Damage":"物理ダメージ","Upgrade":"でアップグレード","a dagger":"ダガー","a short sword":"短剣","a pole axe":"ポールアックス","Energy":"エネルギー","an apple":"リンゴ","Physical Damage Buff":"物理ダメージUP","an amulet of damage":"ダメージの首飾り","Armor Class":"アーマークラス","\\ Luck Bonus":"\\ 幸運UP","a ring armour":"リングアーマー","a rock":"石","An edged weapon":"","A hafted weapon":"","A pole weapon":"","Fire Damage":"","Cold Damage":"","Lightning Damage":"","Poison Damage":"","All Resistance":"","Fire Resistance":"","Cold Resistance":"","Lightning Resistance":"","Poison Resistance":"","HP":"HP","*":"*","Small":"小部屋","Flats":"平野","Paddy":"田んぼ","Play":"プレイする","Choose a hero":"ヒーローを選んでください","Choose this hero":"このヒーローを選ぶ","Which items to see?":"どのアイテムを見ますか？","Destroy this item":"このアイテムを壊す","Which items to buy?":"どのアイテムを買いますか？","Buy this item":"このアイテムを買う","Choose a mine":"発掘場所を選んでください","Choose this mine":"この場所にする","Which items to place?":"アイテムを選んでください","Choose this item":"このアイテムにする","Blocking!":"経路がありません","Choose a place":"場所を選んでください","Choose this place":"この場所にする","Preview the path":"経路をプレビューする","Go to next wave":"次のウェーブ","Replace this item":"アイテムを再配置する","Combine these items":"アイテムを結合する","Cannot combine!":"その組み合わせは結合できません！","Now progressing":"処理中です…","You died":"あなたは死にました","Back to the town":"町に戻ります"}
 },{}],4:[function(require,module,exports){
+var GotandaDiamondMine = require('./GotandaDiamondMine');
+
+// for node.js, not for CommonJS
+module.exports = GotandaDiamondMine;
+
+GotandaDiamondMine.prototype.initialCanvas = function (element) {
+  this.canvasElement = document.createElement('canvas');
+  element.appendChild(this.canvasElement);
+  this.resizeCanvas();
+
+  GotandaDiamondMine.ins = this;
+  var gdm = this;
+  this.canvasElement.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    var rect = e.target.getBoundingClientRect();
+    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top, 'start');
+    if (gdm.point(point[0], point[1])) {
+      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+        gdm.startAnimation();
+      }
+      gdm.draw();
+    }
+    gdm.touchNow = point;
+  });
+
+  this.canvasElement.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    var rect = e.target.getBoundingClientRect();
+    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top, 'move');
+    if (gdm.touchNow[0] === point[0] && gdm.touchNow[1] === point[1]) {
+      // nothing
+
+    } else if (gdm.point(point[0], point[1])) {
+      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+        gdm.startAnimation();
+      }
+      gdm.draw();
+    }
+    gdm.touchNow = point;
+  });
+
+  this.canvasElement.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    var rect = e.target.getBoundingClientRect();
+    var point = gdm.getPointFromHTML(e.clientX - rect.left, e.clientY - rect.top);
+    if (gdm.point(point[0], point[1])) {
+      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
+        gdm.startAnimation();
+      }
+      gdm.draw();
+    }
+  });
+
+  window.addEventListener('resize', function() {
+    if (gdm.resizeTimer) {
+      clearTimeout(gdm.resizeTimer);
+    }
+    gdm.resizeTimer = setTimeout(function () {
+      gdm.resizeCanvas();
+    }, 100);
+  });
+
+};
+
+GotandaDiamondMine.FONT_MAP_SIZE = 50; // font map is for pre-rendering area, 50 x 50 is reserved in the default
+GotandaDiamondMine.prototype.resizeCanvas = function () {
+  if (this.maxWidth  && this.maxWidth  === window.innerWidth &&
+      this.maxHeight && this.maxHeight === window.innerHeight) {
+    return; // nothing to do
+  }
+
+  var device_pixel_ratio = window.devicePixelRatio || 1;
+  this.maxWidth  = window.innerWidth;
+  this.maxHeight = window.innerHeight;
+  var font_size = Math.min(Math.floor(this.maxWidth * device_pixel_ratio / 54), Math.floor(this.maxHeight * device_pixel_ratio / 48 / 2));
+  if (this.fontX === font_size && this.fontY === font_size * 2) {
+    return; // nothing to do
+  }
+
+  this.fontX = font_size; this.fontY = font_size * 2;
+  this.devicePixelRatio = device_pixel_ratio;
+
+  this.canvasElement.setAttribute('width',  this.fontX * 54);
+  this.canvasElement.setAttribute('height', this.fontY * 48);
+  this.canvasElement.parentElement.style.width  = Math.round(this.fontX * 54 / device_pixel_ratio) + 'px';
+  this.canvasElement.parentElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
+  this.canvasElement.style.width  = Math.round(this.fontX * 54 / device_pixel_ratio) + 'px';
+  this.canvasElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
+  this.canvasContext = this.canvasElement.getContext("2d");
+  this.canvasContext.fillStyle = 'black';
+
+  this.fontCanvasElement = document.createElement('canvas');
+  this.fontCanvasElement.setAttribute('width',  this.fontX);
+  this.fontCanvasElement.setAttribute('height', this.fontY);
+  this.fontCanvasContext = this.fontCanvasElement.getContext("2d");
+  this.fontCanvasContext.fillStyle = this.fillStyle = 'white';
+  this.fontCanvasContext.font = this.fontY + 'px Monospace';
+  this.fontCanvasContext.textAlign = 'center';
+  this.fontCanvasContext.textBaseline = 'middle';
+
+  this.fontMap = {};
+  this.fontLength = 0;
+  this.fontMapCanvasElement = document.createElement('canvas');
+  this.fontMapCanvasElement.setAttribute('width',  this.fontX * GotandaDiamondMine.FONT_MAP_SIZE);
+  this.fontMapCanvasElement.setAttribute('height', this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+  this.fontMapCanvasContext = this.fontMapCanvasElement.getContext("2d");
+  this.fontMapCanvasContext.fillStyle = 'black';
+  this.fontMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
+
+  // initial drawing
+  this.draw(true);
+};
+
+GotandaDiamondMine.prototype.getPointFromHTML = function (x, y, mode) {
+  var px = x, py = y;
+  if (mode === 'start') {
+    this.touchStart = [ x, y ];
+  } else if (mode === 'move' ) { // swiping is 1/2 speed
+    var touch_start = this.touchStart;
+    px = (touch_start[0] + x) / 2;
+    py = (touch_start[1] + y) / 2;
+  }
+  var mx = Math.floor(px * this.devicePixelRatio / this.fontX), my = Math.floor(py * this.devicePixelRatio / this.fontY);
+  return [ mx, my ];
+};
+
+GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
+GotandaDiamondMine.prototype.draw = function (initial) {
+  var screen = this.getScreen();
+  var context = this.canvasContext;
+  var font_element = this.fontCanvasElement;
+  var font_context = this.fontCanvasContext;
+  var font_map = this.fontMap;
+  var font_map_element = this.fontMapCanvasElement;
+  var font_map_context = this.fontMapCanvasContext;
+  var old_screen = initial ? null : this.oldScreen;
+  var dw = this.fontX, dh = this.fontY;
+  var get_str_pos = function (str, color) {
+    if (font_map[str + ' ' + color]) {
+      return font_map[str + ' ' + color];
+    }
+    ++this.fontLength;
+    var dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw, dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
+    var px = dw * 0.5, py = dh * 0.5;
+    font_context.clearRect(0, 0, dw, dh);
+    font_context.fillStyle = color;
+    font_context.fillText(str, px, py);
+    font_map_context.drawImage(font_element, dx, dy);
+    font_map[str + ' ' + color] = [ dx, dy ];
+    return font_map[str + ' ' + color];
+  };
+  for (var y = 0; y < 48; ++y) {
+    for (var x = 0; x < 54; ++x) {
+      var str = screen[y][x];
+      if (!str || (old_screen && str === old_screen[y][x])) { // null or nor-updated
+        continue;
+      }
+
+      var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
+      if (colors) {
+        if (this.fillStyle !== colors[1]) {
+          //font_context.fillStyle = this.fillStyle = colors[1];
+          this.fillStyle = colors[1];
+        }
+        str = colors[2];
+      } else {
+        if (this.fillStyle !== 'white') {
+          //font_context.fillStyle = this.fillStyle = 'white';
+          this.fillStyle = 'white';
+        }
+      }
+      var dx = dw * x, dy = dh * y;
+      var s = get_str_pos.call(this, str, this.fillStyle);
+      var sx = s[0], sy = s[1], sw = dw, sh = dh;
+      context.drawImage(font_map_element, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+  }
+  this.oldScreen = screen.map(function (row) { return row.concat(); });
+};
+
+GotandaDiamondMine.prototype.startAnimation = function () {
+  var gdm = this;
+  this.animationInterval = setInterval(function () {
+    gdm.point(0, 0);
+    gdm.draw();
+    if (gdm.state !== GotandaDiamondMine.STATE_ANIMATION) {
+      clearInterval(gdm.animationInterval);
+      gdm.animationInterval = null;
+    }
+  }, 20);
+};
+
+},{"./GotandaDiamondMine":1}],5:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -1448,7 +1641,6 @@ exports.SlowBuffer = SlowBuffer
 exports.INSPECT_MAX_BYTES = 50
 Buffer.poolSize = 8192 // not used by this implementation
 
-var kMaxLength = 0x3fffffff
 var rootParent = {}
 
 /**
@@ -1474,17 +1666,26 @@ var rootParent = {}
  * get the Object implementation, which is slower but will work correctly.
  */
 Buffer.TYPED_ARRAY_SUPPORT = (function () {
+  function Foo () {}
   try {
     var buf = new ArrayBuffer(0)
     var arr = new Uint8Array(buf)
     arr.foo = function () { return 42 }
+    arr.constructor = Foo
     return arr.foo() === 42 && // typed array instances can be augmented
+        arr.constructor === Foo && // constructor can be set
         typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
         new Uint8Array(1).subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
   } catch (e) {
     return false
   }
 })()
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
 
 /**
  * Class: Buffer
@@ -1636,9 +1837,9 @@ function allocate (that, length) {
 function checked (length) {
   // Note: cannot use `length < kMaxLength` here because that fails when
   // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength) {
+  if (length >= kMaxLength()) {
     throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength.toString(16) + ' bytes')
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
   }
   return length | 0
 }
@@ -1730,29 +1931,38 @@ Buffer.concat = function concat (list, length) {
 }
 
 function byteLength (string, encoding) {
-  if (typeof string !== 'string') string = String(string)
+  if (typeof string !== 'string') string = '' + string
 
-  if (string.length === 0) return 0
+  var len = string.length
+  if (len === 0) return 0
 
-  switch (encoding || 'utf8') {
-    case 'ascii':
-    case 'binary':
-    case 'raw':
-      return string.length
-    case 'ucs2':
-    case 'ucs-2':
-    case 'utf16le':
-    case 'utf-16le':
-      return string.length * 2
-    case 'hex':
-      return string.length >>> 1
-    case 'utf8':
-    case 'utf-8':
-      return utf8ToBytes(string).length
-    case 'base64':
-      return base64ToBytes(string).length
-    default:
-      return string.length
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'binary':
+      // Deprecated
+      case 'raw':
+      case 'raws':
+        return len
+      case 'utf8':
+      case 'utf-8':
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
   }
 }
 Buffer.byteLength = byteLength
@@ -1761,8 +1971,7 @@ Buffer.byteLength = byteLength
 Buffer.prototype.length = undefined
 Buffer.prototype.parent = undefined
 
-// toString(encoding, start=0, end=buffer.length)
-Buffer.prototype.toString = function toString (encoding, start, end) {
+function slowToString (encoding, start, end) {
   var loweredCase = false
 
   start = start | 0
@@ -1803,6 +2012,13 @@ Buffer.prototype.toString = function toString (encoding, start, end) {
         loweredCase = true
     }
   }
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
 }
 
 Buffer.prototype.equals = function equals (b) {
@@ -2847,7 +3063,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":5,"ieee754":6,"is-array":7}],5:[function(require,module,exports){
+},{"base64-js":6,"ieee754":7,"is-array":8}],6:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -2973,16 +3189,16 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m,
-      eLen = nBytes * 8 - mLen - 1,
-      eMax = (1 << eLen) - 1,
-      eBias = eMax >> 1,
-      nBits = -7,
-      i = isLE ? (nBytes - 1) : 0,
-      d = isLE ? -1 : 1,
-      s = buffer[offset + i]
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
 
   i += d
 
@@ -3008,14 +3224,14 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 }
 
 exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c,
-      eLen = nBytes * 8 - mLen - 1,
-      eMax = (1 << eLen) - 1,
-      eBias = eMax >> 1,
-      rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
-      i = isLE ? 0 : (nBytes - 1),
-      d = isLE ? 1 : -1,
-      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
 
   value = Math.abs(value)
 
@@ -3059,7 +3275,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * isArray
@@ -3094,9 +3310,9 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (Buffer){
-//  Chance.js 0.7.5
+//  Chance.js 0.7.6
 //  http://chancejs.com
 //  (c) 2013 Victor Quinn
 //  Chance may be freely distributed or modified under the MIT license.
@@ -3156,7 +3372,7 @@ module.exports = isArray || function (val) {
         return this;
     }
 
-    Chance.prototype.VERSION = "0.7.5";
+    Chance.prototype.VERSION = "0.7.6";
 
     // Random helper functions
     function initOptions(options, defaults) {
@@ -4562,7 +4778,7 @@ module.exports = isArray || function (val) {
 
         // If the year is this year, need to ensure month is greater than the
         // current month or this expiration will not be valid
-        if (exp.year === (new Date().getFullYear())) {
+        if (exp.year === (new Date().getFullYear()).toString()) {
             exp.month = this.exp_month({future: true});
         } else {
             exp.month = this.exp_month();
@@ -4574,13 +4790,14 @@ module.exports = isArray || function (val) {
     Chance.prototype.exp_month = function (options) {
         options = initOptions(options);
         var month, month_int,
-            curMonth = new Date().getMonth();
+            // Date object months are 0 indexed
+            curMonth = new Date().getMonth() + 1;
 
         if (options.future) {
             do {
                 month = this.month({raw: true}).numeric;
                 month_int = parseInt(month, 10);
-            } while (month_int < curMonth);
+            } while (month_int <= curMonth);
         } else {
             month = this.month({raw: true}).numeric;
         }
@@ -5610,13 +5827,13 @@ module.exports = isArray || function (val) {
 })();
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":4}],9:[function(require,module,exports){
+},{"buffer":5}],10:[function(require,module,exports){
 module.exports = require('./src/PathFinding');
 
-},{"./src/PathFinding":12}],10:[function(require,module,exports){
+},{"./src/PathFinding":13}],11:[function(require,module,exports){
 module.exports = require('./lib/heap');
 
-},{"./lib/heap":11}],11:[function(require,module,exports){
+},{"./lib/heap":12}],12:[function(require,module,exports){
 // Generated by CoffeeScript 1.8.0
 (function() {
   var Heap, defaultCmp, floor, heapify, heappop, heappush, heappushpop, heapreplace, insort, min, nlargest, nsmallest, updateItem, _siftdown, _siftup;
@@ -5987,7 +6204,7 @@ module.exports = require('./lib/heap');
 
 }).call(this);
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports = {
     'Heap'                      : require('heap'),
     'Node'                      : require('./core/Node'),
@@ -6007,7 +6224,7 @@ module.exports = {
     'JumpPointFinder'           : require('./finders/JumpPointFinder'),
 };
 
-},{"./core/DiagonalMovement":13,"./core/Grid":14,"./core/Heuristic":15,"./core/Node":16,"./core/Util":17,"./finders/AStarFinder":18,"./finders/BestFirstFinder":19,"./finders/BiAStarFinder":20,"./finders/BiBestFirstFinder":21,"./finders/BiBreadthFirstFinder":22,"./finders/BiDijkstraFinder":23,"./finders/BreadthFirstFinder":24,"./finders/DijkstraFinder":25,"./finders/IDAStarFinder":26,"./finders/JumpPointFinder":31,"heap":10}],13:[function(require,module,exports){
+},{"./core/DiagonalMovement":14,"./core/Grid":15,"./core/Heuristic":16,"./core/Node":17,"./core/Util":18,"./finders/AStarFinder":19,"./finders/BestFirstFinder":20,"./finders/BiAStarFinder":21,"./finders/BiBestFirstFinder":22,"./finders/BiBreadthFirstFinder":23,"./finders/BiDijkstraFinder":24,"./finders/BreadthFirstFinder":25,"./finders/DijkstraFinder":26,"./finders/IDAStarFinder":27,"./finders/JumpPointFinder":32,"heap":11}],14:[function(require,module,exports){
 var DiagonalMovement = {
     Always: 1,
     Never: 2,
@@ -6016,7 +6233,7 @@ var DiagonalMovement = {
 };
 
 module.exports = DiagonalMovement;
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var Node = require('./Node');
 var DiagonalMovement = require('./DiagonalMovement');
 
@@ -6265,7 +6482,7 @@ Grid.prototype.clone = function() {
 
 module.exports = Grid;
 
-},{"./DiagonalMovement":13,"./Node":16}],15:[function(require,module,exports){
+},{"./DiagonalMovement":14,"./Node":17}],16:[function(require,module,exports){
 /**
  * @namespace PF.Heuristic
  * @description A collection of heuristic functions.
@@ -6315,7 +6532,7 @@ module.exports = {
 
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * A node in grid. 
  * This class holds some basic information about a node and custom 
@@ -6345,7 +6562,7 @@ function Node(x, y, walkable) {
 
 module.exports = Node;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * Backtrace according to the parent records and return the path.
  * (including both start and end nodes)
@@ -6593,7 +6810,7 @@ function compressPath(path) {
 }
 exports.compressPath = compressPath;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var Heap       = require('heap');
 var Util       = require('../core/Util');
 var Heuristic  = require('../core/Heuristic');
@@ -6720,7 +6937,7 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = AStarFinder;
 
-},{"../core/DiagonalMovement":13,"../core/Heuristic":15,"../core/Util":17,"heap":10}],19:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Util":18,"heap":11}],20:[function(require,module,exports){
 var AStarFinder = require('./AStarFinder');
 
 /**
@@ -6748,7 +6965,7 @@ BestFirstFinder.prototype.constructor = BestFirstFinder;
 
 module.exports = BestFirstFinder;
 
-},{"./AStarFinder":18}],20:[function(require,module,exports){
+},{"./AStarFinder":19}],21:[function(require,module,exports){
 var Heap       = require('heap');
 var Util       = require('../core/Util');
 var Heuristic  = require('../core/Heuristic');
@@ -6927,7 +7144,7 @@ BiAStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = BiAStarFinder;
 
-},{"../core/DiagonalMovement":13,"../core/Heuristic":15,"../core/Util":17,"heap":10}],21:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Util":18,"heap":11}],22:[function(require,module,exports){
 var BiAStarFinder = require('./BiAStarFinder');
 
 /**
@@ -6955,7 +7172,7 @@ BiBestFirstFinder.prototype.constructor = BiBestFirstFinder;
 
 module.exports = BiBestFirstFinder;
 
-},{"./BiAStarFinder":20}],22:[function(require,module,exports){
+},{"./BiAStarFinder":21}],23:[function(require,module,exports){
 var Util = require('../core/Util');
 var DiagonalMovement = require('../core/DiagonalMovement');
 
@@ -7070,7 +7287,7 @@ BiBreadthFirstFinder.prototype.findPath = function(startX, startY, endX, endY, g
 
 module.exports = BiBreadthFirstFinder;
 
-},{"../core/DiagonalMovement":13,"../core/Util":17}],23:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"../core/Util":18}],24:[function(require,module,exports){
 var BiAStarFinder = require('./BiAStarFinder');
 
 /**
@@ -7094,7 +7311,7 @@ BiDijkstraFinder.prototype.constructor = BiDijkstraFinder;
 
 module.exports = BiDijkstraFinder;
 
-},{"./BiAStarFinder":20}],24:[function(require,module,exports){
+},{"./BiAStarFinder":21}],25:[function(require,module,exports){
 var Util = require('../core/Util');
 var DiagonalMovement = require('../core/DiagonalMovement');
 
@@ -7173,7 +7390,7 @@ BreadthFirstFinder.prototype.findPath = function(startX, startY, endX, endY, gri
 
 module.exports = BreadthFirstFinder;
 
-},{"../core/DiagonalMovement":13,"../core/Util":17}],25:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"../core/Util":18}],26:[function(require,module,exports){
 var AStarFinder = require('./AStarFinder');
 
 /**
@@ -7197,7 +7414,7 @@ DijkstraFinder.prototype.constructor = DijkstraFinder;
 
 module.exports = DijkstraFinder;
 
-},{"./AStarFinder":18}],26:[function(require,module,exports){
+},{"./AStarFinder":19}],27:[function(require,module,exports){
 var Util       = require('../core/Util');
 var Heuristic  = require('../core/Heuristic');
 var Node       = require('../core/Node');
@@ -7407,7 +7624,7 @@ IDAStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = IDAStarFinder;
 
-},{"../core/DiagonalMovement":13,"../core/Heuristic":15,"../core/Node":16,"../core/Util":17}],27:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Node":17,"../core/Util":18}],28:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -7558,7 +7775,7 @@ JPFAlwaysMoveDiagonally.prototype._findNeighbors = function(node) {
 
 module.exports = JPFAlwaysMoveDiagonally;
 
-},{"../core/DiagonalMovement":13,"./JumpPointFinderBase":32}],28:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],29:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -7715,7 +7932,7 @@ JPFMoveDiagonallyIfAtMostOneObstacle.prototype._findNeighbors = function(node) {
 
 module.exports = JPFMoveDiagonallyIfAtMostOneObstacle;
 
-},{"../core/DiagonalMovement":13,"./JumpPointFinderBase":32}],29:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],30:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -7891,7 +8108,7 @@ JPFMoveDiagonallyIfNoObstacles.prototype._findNeighbors = function(node) {
 
 module.exports = JPFMoveDiagonallyIfNoObstacles;
 
-},{"../core/DiagonalMovement":13,"./JumpPointFinderBase":32}],30:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],31:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -8013,7 +8230,7 @@ JPFNeverMoveDiagonally.prototype._findNeighbors = function(node) {
 
 module.exports = JPFNeverMoveDiagonally;
 
-},{"../core/DiagonalMovement":13,"./JumpPointFinderBase":32}],31:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"./JumpPointFinderBase":33}],32:[function(require,module,exports){
 /**
  * @author aniero / https://github.com/aniero
  */
@@ -8046,7 +8263,7 @@ function JumpPointFinder(opt) {
 
 module.exports = JumpPointFinder;
 
-},{"../core/DiagonalMovement":13,"./JPFAlwaysMoveDiagonally":27,"./JPFMoveDiagonallyIfAtMostOneObstacle":28,"./JPFMoveDiagonallyIfNoObstacles":29,"./JPFNeverMoveDiagonally":30}],32:[function(require,module,exports){
+},{"../core/DiagonalMovement":14,"./JPFAlwaysMoveDiagonally":28,"./JPFMoveDiagonallyIfAtMostOneObstacle":29,"./JPFMoveDiagonallyIfNoObstacles":30,"./JPFNeverMoveDiagonally":31}],33:[function(require,module,exports){
 /**
  * @author imor / https://github.com/imor
  */
@@ -8162,198 +8379,5 @@ JumpPointFinderBase.prototype._identifySuccessors = function(node) {
 
 module.exports = JumpPointFinderBase;
 
-},{"../core/DiagonalMovement":13,"../core/Heuristic":15,"../core/Util":17,"heap":10}],33:[function(require,module,exports){
-var GotandaDiamondMine = require('./GotandaDiamondMine');
-
-// for node.js, not for CommonJS
-module.exports = GotandaDiamondMine;
-
-GotandaDiamondMine.prototype.initialCanvas = function (element) {
-  this.canvasElement = document.createElement('canvas');
-  element.appendChild(this.canvasElement);
-  this.resizeCanvas();
-
-  GotandaDiamondMine.ins = this;
-  var gdm = this;
-  this.canvasElement.addEventListener('touchstart', function (e) {
-    e.preventDefault();
-    var rect = e.target.getBoundingClientRect();
-    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top, 'start');
-    if (gdm.point(point[0], point[1])) {
-      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
-        gdm.startAnimation();
-      }
-      gdm.draw();
-    }
-    gdm.touchNow = point;
-  });
-
-  this.canvasElement.addEventListener('touchmove', function (e) {
-    e.preventDefault();
-    var rect = e.target.getBoundingClientRect();
-    var point = gdm.getPointFromHTML(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top, 'move');
-    if (gdm.touchNow[0] === point[0] && gdm.touchNow[1] === point[1]) {
-      // nothing
-
-    } else if (gdm.point(point[0], point[1])) {
-      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
-        gdm.startAnimation();
-      }
-      gdm.draw();
-    }
-    gdm.touchNow = point;
-  });
-
-  this.canvasElement.addEventListener('mousedown', function (e) {
-    e.preventDefault();
-    var rect = e.target.getBoundingClientRect();
-    var point = gdm.getPointFromHTML(e.clientX - rect.left, e.clientY - rect.top);
-    if (gdm.point(point[0], point[1])) {
-      if (gdm.state === GotandaDiamondMine.STATE_ANIMATION && !gdm.animationInterval) {
-        gdm.startAnimation();
-      }
-      gdm.draw();
-    }
-  });
-
-  window.addEventListener('resize', function() {
-    if (gdm.resizeTimer) {
-      clearTimeout(gdm.resizeTimer);
-    }
-    gdm.resizeTimer = setTimeout(function () {
-      gdm.resizeCanvas();
-    }, 100);
-  });
-
-};
-
-GotandaDiamondMine.FONT_MAP_SIZE = 50;
-GotandaDiamondMine.prototype.resizeCanvas = function () {
-  if (this.maxWidth  && this.maxWidth  === window.innerWidth &&
-      this.maxHeight && this.maxHeight === window.innerHeight) {
-    return; // nothing to do
-  }
-
-  var device_pixel_ratio = window.devicePixelRatio || 1;
-  this.maxWidth  = window.innerWidth;
-  this.maxHeight = window.innerHeight;
-  var font_size = Math.min(Math.floor(this.maxWidth * device_pixel_ratio / 27), Math.floor(this.maxHeight * device_pixel_ratio / 48));
-  if (this.fontX === font_size && this.fontY === font_size) {
-    return; // nothing to do
-  }
-
-  this.fontX = font_size; this.fontY = font_size;
-  this.devicePixelRatio = device_pixel_ratio;
-
-  this.canvasElement.setAttribute('width',  this.fontX * 27);
-  this.canvasElement.setAttribute('height', this.fontY * 48);
-  this.canvasElement.parentElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
-  this.canvasElement.parentElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
-  this.canvasElement.style.width  = Math.round(this.fontX * 27 / device_pixel_ratio) + 'px';
-  this.canvasElement.style.height = Math.round(this.fontY * 48 / device_pixel_ratio) + 'px';
-  this.canvasContext = this.canvasElement.getContext("2d");
-  this.canvasContext.fillStyle = 'black';
-
-  this.fontCanvasElement = document.createElement('canvas');
-  this.fontCanvasElement.setAttribute('width',  this.fontX);
-  this.fontCanvasElement.setAttribute('height', this.fontY);
-  this.fontCanvasContext = this.fontCanvasElement.getContext("2d");
-  this.fontCanvasContext.fillStyle = this.fillStyle = 'white';
-  this.fontCanvasContext.font = this.fontY + 'px Monospace';
-  this.fontCanvasContext.textAlign = 'center';
-  this.fontCanvasContext.textBaseline = 'middle';
-
-  this.fontMap = {};
-  this.fontLength = 0;
-  this.fontMapCanvasElement = document.createElement('canvas');
-  this.fontMapCanvasElement.setAttribute('width',  this.fontX * GotandaDiamondMine.FONT_MAP_SIZE);
-  this.fontMapCanvasElement.setAttribute('height', this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
-  this.fontMapCanvasContext = this.fontMapCanvasElement.getContext("2d");
-  this.fontMapCanvasContext.fillStyle = 'black';
-  this.fontMapCanvasContext.fillRect(0, 0, this.fontX * GotandaDiamondMine.FONT_MAP_SIZE, this.fontY * GotandaDiamondMine.FONT_MAP_SIZE);
-
-  // initial drawing
-  this.draw(true);
-};
-
-GotandaDiamondMine.prototype.getPointFromHTML = function (x, y, mode) {
-  var px = x, py = y;
-  if (mode === 'start') {
-    this.touchStart = [ x, y ];
-  } else if (mode === 'move' ) { // swiping is 1/2 speed
-    var touch_start = this.touchStart;
-    px = (touch_start[0] + x) / 2;
-    py = (touch_start[1] + y) / 2;
-  }
-  var mx = Math.floor(px * this.devicePixelRatio / this.fontX), my = Math.floor(py * this.devicePixelRatio / this.fontY);
-  return [ mx, my ];
-};
-
-GotandaDiamondMine.COLOR_REGEXP = /^\{([^-]+)-fg\}(.*)\{\/\1-fg\}$/;
-GotandaDiamondMine.prototype.draw = function (initial) {
-  var screen = this.getScreen();
-  var context = this.canvasContext;
-  var font_element = this.fontCanvasElement;
-  var font_context = this.fontCanvasContext;
-  var font_map = this.fontMap;
-  var font_map_element = this.fontMapCanvasElement;
-  var font_map_context = this.fontMapCanvasContext;
-  var old_screen = initial ? null : this.oldScreen;
-  var dw = this.fontX, dh = this.fontY;
-  var get_str_pos = function (str, color) {
-    if (font_map[str + ' ' + color]) {
-      return font_map[str + ' ' + color];
-    }
-    ++this.fontLength;
-    var dx = (this.fontLength % GotandaDiamondMine.FONT_MAP_SIZE) * dw, dy = Math.floor(this.fontLength / GotandaDiamondMine.FONT_MAP_SIZE) * dh;
-    var px = dw * 0.5, py = dh * 0.5;
-    font_context.clearRect(0, 0, dw, dh);
-    font_context.fillStyle = color;
-    font_context.fillText(str, px, py);
-    font_map_context.drawImage(font_element, dx, dy);
-    font_map[str + ' ' + color] = [ dx, dy ];
-    return font_map[str + ' ' + color];
-  };
-  for (var y = 0; y < 48; ++y) {
-    for (var x = 0; x < 27; ++x) {
-      var str = screen[y][x];
-      if (old_screen && str === old_screen[y][x]) {
-        continue;
-      }
-
-      var colors = GotandaDiamondMine.COLOR_REGEXP.exec(str);
-      if (colors) {
-        if (this.fillStyle !== colors[1]) {
-          //font_context.fillStyle = this.fillStyle = colors[1];
-          this.fillStyle = colors[1];
-        }
-        str = colors[2];
-      } else {
-        if (this.fillStyle !== 'white') {
-          //font_context.fillStyle = this.fillStyle = 'white';
-          this.fillStyle = 'white';
-        }
-      }
-      var dx = dw * x, dy = dh * y;
-      var s = get_str_pos.call(this, str, this.fillStyle);
-      var sx = s[0], sy = s[1], sw = dw, sh = dh;
-      context.drawImage(font_map_element, sx, sy, sw, sh, dx, dy, dw, dh);
-    }
-  }
-  this.oldScreen = screen.map(function (row) { return row.concat(); });
-};
-
-GotandaDiamondMine.prototype.startAnimation = function () {
-  var gdm = this;
-  this.animationInterval = setInterval(function () {
-    gdm.point(0, 0);
-    gdm.draw();
-    if (gdm.state !== GotandaDiamondMine.STATE_ANIMATION) {
-      clearInterval(gdm.animationInterval);
-      gdm.animationInterval = null;
-    }
-  }, 20);
-};
-
-},{"./GotandaDiamondMine":1}]},{},[33])(33)
+},{"../core/DiagonalMovement":14,"../core/Heuristic":16,"../core/Util":18,"heap":11}]},{},[4])(4)
 });
