@@ -1265,16 +1265,16 @@ GotandaDiamondMine.prototype.getDetailItemInfo = function (item, in_shop) { // 5
   }
   return output;
 };
-
+/*
 GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   var items = [];
   for (var i = 0; i < 3; ++i) {
     var item = this.itemsOnHand[i] ? this.getDetailItemInfo(this.itemsOnHand[i]) : GotandaDiamondMine.EMPTY_BOX;
     items = items.concat(i === this.selectedItem ? item : GotandaDiamondMine.colorScreen(item, 'green'));
   }
-  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), items, this.getItemInfo());
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), items, this.getItemInfo2());
 };
-
+*/
 GotandaDiamondMine.prototype.getScreenToUpgrade = function () {
   return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), this.getMap(), GotandaDiamondMine.paste(this.getHandInfo(), this.getUpgradeItemInfo()));
 };
@@ -1374,7 +1374,7 @@ GotandaDiamondMine.prototype.getStatus = function () {
   }
   return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split('') ], 'gray');
 };
-
+/*
 GotandaDiamondMine.getItemInfoLine = function (item, in_shop) {
   var info_str = item[0] + item[2];
   for (var key in item[4]) {
@@ -1391,7 +1391,7 @@ GotandaDiamondMine.getItemInfoLine = function (item, in_shop) {
   }
   return [ output ];
 };
-
+*/
 GotandaDiamondMine.getItemInfoLine2 = function (item) {
   var info_str = item[0] + item[2];
   for (var key in item[4]) {
@@ -1404,6 +1404,7 @@ GotandaDiamondMine.getItemInfoLine2 = function (item) {
   return [ output ];
 };
 
+/*
 GotandaDiamondMine.prototype.getItemInfo = function () {
   var state = this.state;
   var info = [];
@@ -1436,7 +1437,7 @@ GotandaDiamondMine.prototype.getItemInfo = function () {
   }
   return info;
 };
-
+*/
 GotandaDiamondMine.prototype.getHandInfo = function (is_hand) {
   var state = this.state;
   var info = [];
@@ -1518,11 +1519,11 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
     } else if (items_on_map.length <= index) {
       info.push(GotandaDiamondMine.EMPTY_LINE);
     } else if (index === this.confirmingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'aqua')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'aqua')[0]);
     } else if (index === this.sacrificingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'fuchsia')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'fuchsia')[0]);
     } else {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'green')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'green')[0]);
     }
     indexes.push(second_offset && i === 5 || items_on_map.length <= index ? -1 : index);
   }
