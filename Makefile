@@ -1,5 +1,5 @@
-browser-run: gotandadiamondmine-html5.browserify.js
-	cordova run browser
+browser-run:
+	npm start
 
 push:
 	git commit -a -m 'Commit for build'
@@ -10,10 +10,6 @@ android: gotandadiamondmine-html5.browserify.js
 
 android-run: gotandadiamondmine-html5.browserify.js
 	cordova run android
-
-gotandadiamondmine-html5.browserify.js: gotandadiamondmine.js gotandadiamondmine-html5.js
-	npm install -d
-	cp gotandadiamondmine-html5.browserify.js www/js/gotandadiamondmine-html5.browserify.js
 
 xgettext:
 	xgettext --extract-all --join-existing --sort-by-file --language=C --default-domain=__ja gotandadiamondmine.js
