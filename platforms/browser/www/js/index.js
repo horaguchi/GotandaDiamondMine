@@ -37,7 +37,7 @@ var app = {
   },
   // Update DOM on a Received Event
   receivedEvent: function(id) {
-    console.log('Received Event: ' + id);
+    //console.log('Received Event: ' + id);
     var parentElement = document.getElementById(id);
     var appElement = document.querySelector('.app');
 

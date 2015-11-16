@@ -26,6 +26,7 @@ GotandaDiamondMine.STATE_CHOOSE_HERO = 'choose_hero';
 GotandaDiamondMine.STATE_TOWN_ITEMS  = 'town_items';
 GotandaDiamondMine.STATE_TOWN_SHOP   = 'town_shop';
 GotandaDiamondMine.STATE_TOWN_MINE   = 'town_mine';
+GotandaDiamondMine.STATE_CHOOSE_MINE = 'choose_mine';
 GotandaDiamondMine.STATE_CHOOSE_HAND = 'choose_hand';
 GotandaDiamondMine.STATE_PLACE       = 'place';
 GotandaDiamondMine.STATE_CONFIRM     = 'confirm';
@@ -315,7 +316,7 @@ GotandaDiamondMine.prototype.changeState = function (state) {
     this.createShopChoices();
     this.selectedItem = -1;
 
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) { // TOWN MINE
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) { // CHOOSE MINE
     this.createMineChoices();
     this.selectedMine = -1;
 
@@ -423,39 +424,30 @@ GotandaDiamondMine.colorScreen = function (arr, color, mode, from_x, to_x) {
   return copied;
 };
 
-GotandaDiamondMine.EMPTY_LINE = [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '];
+GotandaDiamondMine.EMPTY_LINE = [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '];
 
 GotandaDiamondMine.EMPTY_BOX = [
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
-];
-
-GotandaDiamondMine.EMPTY_MINE_BOX = [
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
 ];
 
 GotandaDiamondMine.EMPTY_LINED_BOX = [
-  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+']
+  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+']
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -472,8 +464,8 @@ GotandaDiamondMine.prototype.point = function (x, y) {
     return this.pointTownItems(x, y);
   } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     return this.pointTownShop(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return this.pointTownMine(x, y);
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
+    return this.pointChooseMine(x, y);
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_HAND) {
     return this.pointChooseHand(x, y);
   } else if (state === GotandaDiamondMine.STATE_PLACE) {
@@ -586,39 +578,9 @@ GotandaDiamondMine.prototype.pointTownShop = function (x, y) {
     
   }
 };
-
-GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
-  if (0 <= x && x <= 8 && 3 <= y && y <= 5) { // Town Items
-    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
-    return true;
-  } else if (9 <= x && x <= 17 && 3 <= y && y <= 5) { // Town Shop
-    this.changeState(GotandaDiamondMine.STATE_TOWN_SHOP);
-    return true;
-  } else if (18 <= x && x <= 26 && 3 <= y && y <= 5) { // Town Mine
-    this.changeState(GotandaDiamondMine.STATE_TOWN_MINE);
-    return true;
-  } else if (0 <= x && x <= 53 && 6 <= y && y <= 11 && 1 <= this.mineChoices.length) { // Mine 1
-    this.selectedMine = 0;
-    return true;
-  } else if (0 <= x && x <= 53 && 12 <= y && y <= 17 && 2 <= this.mineChoices.length) { // Mine 2
-    this.selectedMine = 1;
-    return true;
-  } else if (0 <= x && x <= 53 && 18 <= y && y <= 23 && 3 <= this.mineChoices.length) { // Mine 3
-    this.selectedMine = 2;
-    return true;
-  } else if (0 <= x && x <= 53 && 24 <= y && y <= 29 && 4 <= this.mineChoices.length) { // Mine 4
-    this.selectedMine = 3;
-    return true;
-  } else if (0 <= x && x <= 53 && 30 <= y && y <= 35 && 5 <= this.mineChoices.length) { // Mine 5
-    this.selectedMine = 4;
-    return true;
-  } else if (0 <= x && x <= 53 && 36 <= y && y <= 41 && 6 <= this.mineChoices.length) { // Mine 6
-    this.selectedMine = 5;
-    return true;
-  } else if (0 <= x && x <= 53 && 42 <= y && y <= 47 && 7 <= this.mineChoices.length) { // Mine 7
-    this.selectedMine = 6;
-    return true;
-  } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose a mine
+*/
+GotandaDiamondMine.prototype.pointChooseMine = function (x, y) {
+  if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose a mine
     if (this.selectedMine !== -1) {
       var selected_mine = this.mineChoices[this.selectedMine];
       this.createMap(selected_mine); // mapSymbol, mapColor, points, path are created
@@ -630,9 +592,18 @@ GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
       this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       return true;
     }
+  } else if (0 <= x && x <= 53 && 10 <= y && y <= 18 && 1 <= this.mineChoices.length) { // Mine 1
+    this.selectedMine = 0;
+    return true;
+  } else if (0 <= x && x <= 53 && 19 <= y && y <= 27 && 2 <= this.mineChoices.length) { // Mine 2
+    this.selectedMine = 1;
+    return true;
+  } else if (0 <= x && x <= 53 && 28 <= y && y <= 36 && 3 <= this.mineChoices.length) { // Mine 3
+    this.selectedMine = 2;
+    return true;
   }
 };
-*/
+
 GotandaDiamondMine.prototype.pointChooseHand = function (x, y) {
   if (0 <= x && x <= 53 && 10 <= y && y <= 36) { // Map is cancel
     this.selectedItem = -1;
@@ -950,7 +921,7 @@ GotandaDiamondMine.prototype.pointDefeated = function (x, y) {
 
 GotandaDiamondMine.prototype.pointVictory = function (x, y) {
   if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Back to the town
-    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
+    this.changeState(GotandaDiamondMine.STATE_CHOOSE_MINE);
     return true;
   }
 };
@@ -1008,8 +979,8 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 GotandaDiamondMine.prototype.createMineChoices = function () {
   // TODO
   this.mineChoices = [
-    { depth: this.depth + 100, map: 'Flats', waves:5 },
-    { depth: this.depth + 200, map: 'Small', waves:20 },
+    { depth: this.depth + 100, map: 'Small', waves:1 },
+    { depth: this.depth + 200, map: 'Flats', waves:20 },
     { depth: this.depth + 300, map: 'Paddy', waves:30 }
   ];
 };
@@ -1066,8 +1037,8 @@ GotandaDiamondMine.prototype.getScreen = function () {
     return this.getScreenAtTownItems();
   } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     return this.getScreenAtTownShop();
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return this.getScreenAtTownMine();
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
+    return this.getScreenToChooseMine();
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
     return this.getScreenToUpgrade();
   } else {
@@ -1105,7 +1076,7 @@ GotandaDiamondMine.prototype.getButton = function () {
     } else {
       return this.getButtonBox("Buy this item", 'lime');
     }
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
     if (this.selectedMine === -1) {
       return this.getButtonBox("Choose a mine", 'gray');
     } else {
@@ -1211,33 +1182,34 @@ GotandaDiamondMine.prototype.getScreenAtTownShop = function () {
   var selected_item = this.selectedItem === -1 ? GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray') : this.getDetailItemInfo(this.itemsInShop[this.selectedItem], true);
   return [].concat(this.getButton(), this.getStatus(), this.getTownTab(), selected_item, this.getItemInfo(true));
 };
-
-GotandaDiamondMine.prototype.getDetailMineInfo = function (mine_info) { // 54 x 6
+*/
+GotandaDiamondMine.prototype.getDetailMineInfo = function (mine_info) { // 54 x 9
   var output = [ '+----------------------------------------------------+'.split('') ];
   var i = 0;
   for (var key in mine_info ) {
     output.push( ('|' + mine_info[key] + ' ' + this.__(key) + '                                                      ').split('') );
     ++i;
   }
-  for (i; i < 4; ++i) {
+  for (i; i < 7; ++i) {
     output.push('|                                                    |'.split(''));
   }
-  for (var i = 1; i <= 4; ++i) {
+  for (var i = 1; i <= 7; ++i) {
     output[i][53] = '|';
   }
   output.push('+----------------------------------------------------+'.split(''));
   return output;
 };
 
-GotandaDiamondMine.prototype.getScreenAtTownMine = function () {
+GotandaDiamondMine.prototype.getScreenToChooseMine = function () {
   var mines = [];
-  for (var i = 0; i < 7; ++i) {
-    var display_mine = this.mineChoices[i] ? this.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_MINE_BOX;
+  for (var i = 0; i < 3; ++i) {
+    var display_mine = this.mineChoices[i] ? this.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_LINED_BOX;
     mines = mines.concat(i === this.selectedMine ? display_mine : GotandaDiamondMine.colorScreen(display_mine, 'green'));
   }
-  return [].concat(this.getButton(), this.getTownTab(), mines);
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), mines, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo2()));
 };
-*/
+
+/*
 GotandaDiamondMine.prototype.getDetailItemInfo = function (item, in_shop) { // 54 x 9
   var output = [ '+----------------------------------------------------+'.split('') ];
   output.push( ('|' + item[0] + item[2] + ' ' + this.__(item[1]) + '                                                      ').split('') );
@@ -1264,7 +1236,7 @@ GotandaDiamondMine.prototype.getDetailItemInfo = function (item, in_shop) { // 5
   }
   return output;
 };
-/*
+
 GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   var items = [];
   for (var i = 0; i < 3; ++i) {
