@@ -622,7 +622,6 @@ GotandaDiamondMine.prototype.pointConfirmItem = function (pointed_item) {
 
 GotandaDiamondMine.prototype.pointChooseHand = function (x, y) {
   if (0 <= x && x <= 53 && 10 <= y && y <= 36) { // Map is cancel
-    this.selectedItem = -1;
     this.changeState(GotandaDiamondMine.STATE_CONFIRM);
     return true;
   } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose an item
@@ -642,16 +641,13 @@ GotandaDiamondMine.prototype.pointChooseHand = function (x, y) {
     if (selected_item !== -1) {
       if (this.selectedItem !== selected_item) { // Choose different item
         this.selectedItem = selected_item;
-        this.changeState(GotandaDiamondMine.STATE_CHOOSE_HAND);
         return true;
       } else if (this.selectedItem === selected_item) { // Choose same item => cancel
-        this.selectedItem = -1;
         this.changeState(GotandaDiamondMine.STATE_CONFIRM);
         return true;
       }
     }
   } else if (28 <= x && x <= 53 && 37 <= y && y <= 47) { // Item list 
-    this.selectedItem = -1;
     this.changeState(GotandaDiamondMine.STATE_CONFIRM);
     return true;
   }
@@ -877,6 +873,7 @@ GotandaDiamondMine.prototype.actionItem = function (item, units) {
   }
 };
 
+// Add the power to status
 GotandaDiamondMine.prototype.addItemToMap = function (item) {
   if (!item[5]) {
     item[5] = {};
@@ -889,6 +886,7 @@ GotandaDiamondMine.prototype.addItemToMap = function (item) {
   item_status['Added'] = true;
 };
 
+// Remove the power from status
 GotandaDiamondMine.prototype.removeItemFromMap = function (item) {
   
 };
@@ -1088,18 +1086,12 @@ GotandaDiamondMine.prototype.getButton = function () {
     } else {
       return this.getButtonBox("Choose this hero", 'lime');
     }
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    if (this.selectedItem === -1) {
-      return this.getButtonBox("Which items to see?", 'gray');
-    } else {
-      return this.getButtonBox("Destroy this item", 'lime');  
-    }
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
+/*  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
     if (this.selectedItem === -1) {
       return this.getButtonBox("Which items to buy?", 'gray');
     } else {
       return this.getButtonBox("Buy this item", 'lime');
-    }
+    }*/
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
     if (this.selectedMine === -1) {
       return this.getButtonBox("Choose a mine", 'gray');
@@ -1136,7 +1128,7 @@ GotandaDiamondMine.prototype.getButton = function () {
     return this.getButtonBox("Now progressing", 'gray');
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
     if (this.selectedItem === -1) {
-      return this.getButtonBox("Which items to gain?", 'gray');
+      return this.getButtonBox("Which item to gain?", 'gray');
     } else {
       return this.getButtonBox("Choose this item", 'lime');
     }
@@ -1364,20 +1356,7 @@ GotandaDiamondMine.getItemInfoLine = function (item, in_shop) {
   }
   return [ output ];
 };
-*/
-GotandaDiamondMine.getItemInfoLine2 = function (item) {
-  var info_str = item[0] + item[2];
-  for (var key in item[4]) {
-    if (key !== 'Target Depth' && key !== 'Price') {
-      info_str += ' ' + item[4][key] + GotandaDiamondMine.ITEM_ABBR[key];
-    }
-  }
-  var output = (info_str + '                           ').split('');
-  output.length = 27;
-  return [ output ];
-};
 
-/*
 GotandaDiamondMine.prototype.getItemInfo = function () {
   var state = this.state;
   var info = [];
@@ -1411,6 +1390,19 @@ GotandaDiamondMine.prototype.getItemInfo = function () {
   return info;
 };
 */
+
+GotandaDiamondMine.getItemInfoLine2 = function (item) {
+  var info_str = item[0] + item[2];
+  for (var key in item[4]) {
+    if (key !== 'Target Depth' && key !== 'Price') {
+      info_str += ' ' + item[4][key] + GotandaDiamondMine.ITEM_ABBR[key];
+    }
+  }
+  var output = (info_str + '                           ').split('');
+  output.length = 27;
+  return [ output ];
+};
+
 GotandaDiamondMine.prototype.getHandInfo = function (is_hand) {
   var state = this.state;
   var info = [];
