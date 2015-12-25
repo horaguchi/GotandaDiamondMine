@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/horaguchi/GotandaDiamondMine/issues"
   },
-  "license": "Apache License 2.0",
+  "license": "Apache-2.0",
   "author": "Koji Horaguchi <koji.horaguchi@gmail.com> (http://horaguchi.github.io/)",
   "main": "./gotandadiamondmine.js",
   "bin": {
@@ -37,6 +37,6 @@
   "devDependencies": {
     "po2json": "0.4.1",
     "browserify": "12.0.1",
-    "cordova": "5.4.0"
+    "cordova": "5.4.1"
   }
 }
