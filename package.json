@@ -23,8 +23,7 @@
     "url": "git://github.com/horaguchi/GotandaDiamondMine.git"
   },
   "scripts": {
-    "prepublish": "po2json --format=mf __ja.po __ja.po2json.json",
-    "start": "browserify gotandadiamondmine-html5.js -s GotandaDiamondMine -o www/js/gotandadiamondmine-html5.browserify.js && cordova run browser"
+    "start": "po2json --format=mf __ja.po __ja.po2json.json && browserify gotandadiamondmine-html5.js -s GotandaDiamondMine -o www/js/gotandadiamondmine-html5.browserify.js && cordova run browser"
   },
   "directories": {
     "test": "test"

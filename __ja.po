@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-24 01:30+0900\n"
+"POT-Creation-Date: 2015-12-26 02:35+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,232 +17,255 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: gotandadiamondmine.js:98
+msgid "*"
+msgstr "*"
+
+#: gotandadiamondmine.js:80
+msgid "A hafted weapon"
+msgstr ""
+
+#: gotandadiamondmine.js:81
+msgid "A pole weapon"
+msgstr ""
+
+#: gotandadiamondmine.js:89
+msgid "All Resistance"
+msgstr ""
+
+#: gotandadiamondmine.js:79
+msgid "An edged weapon"
+msgstr ""
+
+#: gotandadiamondmine.js:64 gotandadiamondmine.js:88
+msgid "Armor Class"
+msgstr "アーマークラス"
+
+#: gotandadiamondmine.js:1058 gotandadiamondmine.js:1060
+msgid "Blocking!"
+msgstr "経路がありません"
+
+msgid "Buy this item"
+msgstr "このアイテムを買う"
+
+#: gotandadiamondmine.js:1074
+msgid "Cannot combine!"
+msgstr "その組み合わせは結合できません！"
+
+#: gotandadiamondmine.js:1040
+msgid "Choose a hero"
+msgstr "ヒーローを選んでください"
+
+#: gotandadiamondmine.js:1046
+msgid "Choose a mine"
+msgstr "採掘する坑道を選んでください"
+
+#: gotandadiamondmine.js:1058
+msgid "Choose a place"
+msgstr "場所を選んでください"
+
+#: gotandadiamondmine.js:1042
+msgid "Choose this hero"
+msgstr "このヒーローを選ぶ"
+
+#: gotandadiamondmine.js:1054 gotandadiamondmine.js:1082
+msgid "Choose this item"
+msgstr "このアイテムにする"
+
+#: gotandadiamondmine.js:1048
+msgid "Choose this mine"
+msgstr "この場所にする"
+
+#: gotandadiamondmine.js:1060
+msgid "Choose this place"
+msgstr "この場所にする"
+
+#: gotandadiamondmine.js:85
+msgid "Cold Damage"
+msgstr ""
+
+#: gotandadiamondmine.js:91
+msgid "Cold Resistance"
+msgstr ""
+
+#: gotandadiamondmine.js:1072
+msgid "Combine these items"
+msgstr "アイテムを結合する"
+
+msgid "Destroy this item"
+msgstr "このアイテムを壊す"
+
+#: gotandadiamondmine.js:62 gotandadiamondmine.js:95
+msgid "Energy"
+msgstr "エネルギー"
+
+#: gotandadiamondmine.js:84
+msgid "Fire Damage"
+msgstr ""
+
+#: gotandadiamondmine.js:90
+msgid "Fire Resistance"
+msgstr ""
+
+#: gotandadiamondmine.js:131
+msgid "Flats"
+msgstr "平野"
+
+#: gotandadiamondmine.js:1066
+msgid "Go to next wave"
+msgstr "次のウェーブ"
+
+#: gotandadiamondmine.js:97
+msgid "HP"
+msgstr "HP"
+
 #: gotandadiamondmine.js:38
 msgid "Items"
 msgstr ""
 
-#: gotandadiamondmine.js:43 gotandadiamondmine.js:44 gotandadiamondmine.js:45
-#: gotandadiamondmine.js:46 gotandadiamondmine.js:47 gotandadiamondmine.js:48
-#: gotandadiamondmine.js:49 gotandadiamondmine.js:50 gotandadiamondmine.js:51
-#: gotandadiamondmine.js:52 gotandadiamondmine.js:53 gotandadiamondmine.js:54
-#: gotandadiamondmine.js:55 gotandadiamondmine.js:56 gotandadiamondmine.js:57
-#: gotandadiamondmine.js:58 gotandadiamondmine.js:59 gotandadiamondmine.js:60
-#: gotandadiamondmine.js:82
-msgid "Physical Damage"
-msgstr "物理ダメージ"
-
-#: gotandadiamondmine.js:43 gotandadiamondmine.js:44 gotandadiamondmine.js:45
-#: gotandadiamondmine.js:46 gotandadiamondmine.js:47 gotandadiamondmine.js:48
-#: gotandadiamondmine.js:49 gotandadiamondmine.js:50 gotandadiamondmine.js:51
-#: gotandadiamondmine.js:52 gotandadiamondmine.js:53 gotandadiamondmine.js:54
-#: gotandadiamondmine.js:55 gotandadiamondmine.js:56 gotandadiamondmine.js:57
-#: gotandadiamondmine.js:58 gotandadiamondmine.js:59 gotandadiamondmine.js:60
-#: gotandadiamondmine.js:61 gotandadiamondmine.js:62 gotandadiamondmine.js:63
-#: gotandadiamondmine.js:64 gotandadiamondmine.js:81
-msgid "Upgrade"
-msgstr "でアップグレード"
-
-#: gotandadiamondmine.js:43 gotandadiamondmine.js:44 gotandadiamondmine.js:45
-#: gotandadiamondmine.js:46 gotandadiamondmine.js:47 gotandadiamondmine.js:48
-#: gotandadiamondmine.js:49 gotandadiamondmine.js:50 gotandadiamondmine.js:51
-#: gotandadiamondmine.js:52
-msgid "a dagger"
-msgstr "ダガー"
-
-#: gotandadiamondmine.js:53 gotandadiamondmine.js:54 gotandadiamondmine.js:55
-#: gotandadiamondmine.js:56
-msgid "a short sword"
-msgstr "短剣"
-
-#: gotandadiamondmine.js:57 gotandadiamondmine.js:58 gotandadiamondmine.js:59
-#: gotandadiamondmine.js:60
-msgid "a pole axe"
-msgstr "ポールアックス"
-
-#: gotandadiamondmine.js:61 gotandadiamondmine.js:94
-msgid "Energy"
-msgstr "エネルギー"
-
-#: gotandadiamondmine.js:61
-msgid "an apple"
-msgstr "リンゴ"
-
-#: gotandadiamondmine.js:62 gotandadiamondmine.js:93
-msgid "Physical Damage Buff"
-msgstr "物理ダメージUP"
-
-#: gotandadiamondmine.js:62
-msgid "an amulet of damage"
-msgstr "ダメージの首飾り"
-
-#: gotandadiamondmine.js:63 gotandadiamondmine.js:87
-msgid "Armor Class"
-msgstr "アーマークラス"
-
-#: gotandadiamondmine.js:63 gotandadiamondmine.js:95
-msgid "\\ Luck Bonus"
-msgstr "\\ 幸運UP"
-
-#: gotandadiamondmine.js:63
-msgid "a ring armour"
-msgstr "リングアーマー"
-
-#: gotandadiamondmine.js:64
-msgid "a rock"
-msgstr "石"
-
-#: gotandadiamondmine.js:78
-msgid "An edged weapon"
-msgstr ""
-
-#: gotandadiamondmine.js:79
-msgid "A hafted weapon"
-msgstr ""
-
-#: gotandadiamondmine.js:80
-msgid "A pole weapon"
-msgstr ""
-
-#: gotandadiamondmine.js:83
-msgid "Fire Damage"
-msgstr ""
-
-#: gotandadiamondmine.js:84
-msgid "Cold Damage"
-msgstr ""
-
-#: gotandadiamondmine.js:85
+#: gotandadiamondmine.js:86
 msgid "Lightning Damage"
 msgstr ""
 
-#: gotandadiamondmine.js:86
-msgid "Poison Damage"
-msgstr ""
-
-#: gotandadiamondmine.js:88
-msgid "All Resistance"
-msgstr ""
-
-#: gotandadiamondmine.js:89
-msgid "Fire Resistance"
-msgstr ""
-
-#: gotandadiamondmine.js:90
-msgid "Cold Resistance"
-msgstr ""
-
-#: gotandadiamondmine.js:91
+#: gotandadiamondmine.js:92
 msgid "Lightning Resistance"
 msgstr ""
 
-#: gotandadiamondmine.js:92
-msgid "Poison Resistance"
-msgstr ""
+msgid "Luck"
+msgstr "幸運"
 
-#: gotandadiamondmine.js:96
-msgid "HP"
-msgstr "HP"
-
-#: gotandadiamondmine.js:97
-msgid "*"
-msgstr "*"
-
-#: gotandadiamondmine.js:101
-msgid "Small"
-msgstr "小部屋"
-
-#: gotandadiamondmine.js:130
-msgid "Flats"
-msgstr "平野"
-
-#: gotandadiamondmine.js:159
-msgid "Paddy"
-msgstr "田んぼ"
-
-#: gotandadiamondmine.js:1009
-msgid "Play"
-msgstr "プレイする"
-
-#: gotandadiamondmine.js:1012
-msgid "Choose a hero"
-msgstr "ヒーローを選んでください"
-
-#: gotandadiamondmine.js:1014
-msgid "Choose this hero"
-msgstr "このヒーローを選ぶ"
-
-#: gotandadiamondmine.js:1018
-msgid "Which items to see?"
-msgstr "どのアイテムを見ますか？"
-
-#: gotandadiamondmine.js:1020
-msgid "Destroy this item"
-msgstr "このアイテムを壊す"
-
-#: gotandadiamondmine.js:1024
-msgid "Which items to buy?"
-msgstr "どのアイテムを買いますか？"
-
-#: gotandadiamondmine.js:1026
-msgid "Buy this item"
-msgstr "このアイテムを買う"
-
-#: gotandadiamondmine.js:1030
-msgid "Choose a mine"
-msgstr "発掘場所を選んでください"
-
-#: gotandadiamondmine.js:1032
-msgid "Choose this mine"
-msgstr "この場所にする"
-
-#: gotandadiamondmine.js:1036
-msgid "Which items to place?"
-msgstr "アイテムを選んでください"
-
-#: gotandadiamondmine.js:1038
-msgid "Choose this item"
-msgstr "このアイテムにする"
-
-#: gotandadiamondmine.js:1042 gotandadiamondmine.js:1044
-msgid "Blocking!"
-msgstr "経路がありません"
-
-#: gotandadiamondmine.js:1042
-msgid "Choose a place"
-msgstr "場所を選んでください"
-
-#: gotandadiamondmine.js:1044
-msgid "Choose this place"
-msgstr "この場所にする"
-
-#: gotandadiamondmine.js:1048
-msgid "Preview the path"
-msgstr "経路をプレビューする"
-
-#: gotandadiamondmine.js:1050
-msgid "Go to next wave"
-msgstr "次のウェーブ"
-
-#: gotandadiamondmine.js:1054
-msgid "Replace this item"
-msgstr "アイテムを再配置する"
-
-#: gotandadiamondmine.js:1056
-msgid "Combine these items"
-msgstr "アイテムを結合する"
-
-#: gotandadiamondmine.js:1058
-msgid "Cannot combine!"
-msgstr "その組み合わせは結合できません！"
-
-#: gotandadiamondmine.js:1061
+#: gotandadiamondmine.js:1077
 msgid "Now progressing"
 msgstr "処理中です…"
 
-#: gotandadiamondmine.js:1063
+#: gotandadiamondmine.js:160
+msgid "Paddy"
+msgstr "田んぼ"
+
+#: gotandadiamondmine.js:44 gotandadiamondmine.js:45 gotandadiamondmine.js:46
+#: gotandadiamondmine.js:47 gotandadiamondmine.js:48 gotandadiamondmine.js:49
+#: gotandadiamondmine.js:50 gotandadiamondmine.js:51 gotandadiamondmine.js:52
+#: gotandadiamondmine.js:53 gotandadiamondmine.js:54 gotandadiamondmine.js:55
+#: gotandadiamondmine.js:56 gotandadiamondmine.js:57 gotandadiamondmine.js:58
+#: gotandadiamondmine.js:59 gotandadiamondmine.js:60 gotandadiamondmine.js:61
+#: gotandadiamondmine.js:83
+msgid "Physical Damage"
+msgstr "物理ダメージ"
+
+#: gotandadiamondmine.js:63 gotandadiamondmine.js:94
+msgid "Physical Damage Buff"
+msgstr "物理ダメージUP"
+
+#: gotandadiamondmine.js:1037
+msgid "Play"
+msgstr "プレイする"
+
+#: gotandadiamondmine.js:87
+msgid "Poison Damage"
+msgstr "毒ダメージ"
+
+#: gotandadiamondmine.js:93
+msgid "Poison Resistance"
+msgstr "毒耐性"
+
+#: gotandadiamondmine.js:1064
+msgid "Preview the path"
+msgstr "経路をプレビューする"
+
+#: gotandadiamondmine.js:44 gotandadiamondmine.js:45 gotandadiamondmine.js:46
+#: gotandadiamondmine.js:47 gotandadiamondmine.js:48 gotandadiamondmine.js:49
+#: gotandadiamondmine.js:50 gotandadiamondmine.js:51 gotandadiamondmine.js:52
+#: gotandadiamondmine.js:53 gotandadiamondmine.js:54 gotandadiamondmine.js:55
+#: gotandadiamondmine.js:56 gotandadiamondmine.js:57 gotandadiamondmine.js:58
+#: gotandadiamondmine.js:59 gotandadiamondmine.js:60 gotandadiamondmine.js:61
+#: gotandadiamondmine.js:62 gotandadiamondmine.js:63 gotandadiamondmine.js:64
+msgid "Price"
+msgstr "価格"
+
+#: gotandadiamondmine.js:1070
+msgid "Replace this item"
+msgstr "アイテムを再配置する"
+
+#: gotandadiamondmine.js:102
+msgid "Small"
+msgstr "小部屋"
+
+#: gotandadiamondmine.js:44 gotandadiamondmine.js:45 gotandadiamondmine.js:46
+#: gotandadiamondmine.js:47 gotandadiamondmine.js:48 gotandadiamondmine.js:49
+#: gotandadiamondmine.js:50 gotandadiamondmine.js:51 gotandadiamondmine.js:52
+#: gotandadiamondmine.js:53 gotandadiamondmine.js:54 gotandadiamondmine.js:55
+#: gotandadiamondmine.js:56 gotandadiamondmine.js:57 gotandadiamondmine.js:58
+#: gotandadiamondmine.js:59 gotandadiamondmine.js:60 gotandadiamondmine.js:61
+#: gotandadiamondmine.js:62 gotandadiamondmine.js:63 gotandadiamondmine.js:64
+msgid "Target Depth"
+msgstr ""
+
+#: gotandadiamondmine.js:44 gotandadiamondmine.js:45 gotandadiamondmine.js:46
+#: gotandadiamondmine.js:47 gotandadiamondmine.js:48 gotandadiamondmine.js:49
+#: gotandadiamondmine.js:50 gotandadiamondmine.js:51 gotandadiamondmine.js:52
+#: gotandadiamondmine.js:53 gotandadiamondmine.js:54 gotandadiamondmine.js:55
+#: gotandadiamondmine.js:56 gotandadiamondmine.js:57 gotandadiamondmine.js:58
+#: gotandadiamondmine.js:59 gotandadiamondmine.js:60 gotandadiamondmine.js:61
+#: gotandadiamondmine.js:62 gotandadiamondmine.js:63 gotandadiamondmine.js:64
+#: gotandadiamondmine.js:65 gotandadiamondmine.js:82
+msgid "Upgrade"
+msgstr "でアップグレード"
+
+#: gotandadiamondmine.js:1080
+msgid "Which item to gain?"
+msgstr "どのアイテムを獲得しますか？"
+
+msgid "Which items to buy?"
+msgstr "どのアイテムを買いますか？"
+
+#: gotandadiamondmine.js:1052
+msgid "Which items to place?"
+msgstr "アイテムを選んでください"
+
+msgid "Which items to see?"
+msgstr "どのアイテムを見ますか？"
+
+#: gotandadiamondmine.js:1085
 msgid "You died"
 msgstr "あなたは死にました"
 
-#: gotandadiamondmine.js:1065
-msgid "Back to the town"
-msgstr "町に戻ります"
+#: gotandadiamondmine.js:1087
+msgid "You have finished this work; Take the loot"
+msgstr "この坑道の採掘を終えました; 戦利品を獲得します"
+
+#: gotandadiamondmine.js:64 gotandadiamondmine.js:96
+msgid "\\ Luck Bonus"
+msgstr "\\ 幸運UP"
+
+#: gotandadiamondmine.js:44 gotandadiamondmine.js:45 gotandadiamondmine.js:46
+#: gotandadiamondmine.js:47 gotandadiamondmine.js:48 gotandadiamondmine.js:49
+#: gotandadiamondmine.js:50 gotandadiamondmine.js:51 gotandadiamondmine.js:52
+#: gotandadiamondmine.js:53
+msgid "a dagger"
+msgstr "ダガー"
+
+#: gotandadiamondmine.js:58 gotandadiamondmine.js:59 gotandadiamondmine.js:60
+#: gotandadiamondmine.js:61
+msgid "a pole axe"
+msgstr "ポールアックス"
+
+#: gotandadiamondmine.js:64
+msgid "a ring armour"
+msgstr "リングアーマー"
+
+#: gotandadiamondmine.js:65
+msgid "a rock"
+msgstr "石"
+
+#: gotandadiamondmine.js:54 gotandadiamondmine.js:55 gotandadiamondmine.js:56
+#: gotandadiamondmine.js:57
+msgid "a short sword"
+msgstr "短剣"
+
+#: gotandadiamondmine.js:63
+msgid "an amulet of damage"
+msgstr "ダメージの首飾り"
+
+#: gotandadiamondmine.js:62
+msgid "an apple"
+msgstr "リンゴ"
