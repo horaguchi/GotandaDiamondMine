@@ -24,21 +24,22 @@ module.exports = GotandaDiamondMine;
 ////////////////////////////////////////////////////////////////////////////////
 GotandaDiamondMine.STATE_TITLE       = 'title';
 GotandaDiamondMine.STATE_CHOOSE_HERO = 'choose_hero';
-GotandaDiamondMine.STATE_TOWN_ITEMS  = 'town_items';
-GotandaDiamondMine.STATE_TOWN_SHOP   = 'town_shop';
-GotandaDiamondMine.STATE_TOWN_MINE   = 'town_mine';
-GotandaDiamondMine.STATE_CHOOSE_ITEM = 'choose_item';
-GotandaDiamondMine.STATE_PLACE       = 'place';
+GotandaDiamondMine.STATE_CHOOSE_MINE = 'choose_mine';
 GotandaDiamondMine.STATE_CONFIRM     = 'confirm';
+GotandaDiamondMine.STATE_CHOOSE_HAND = 'choose_hand';
+GotandaDiamondMine.STATE_PLACE       = 'place';
 GotandaDiamondMine.STATE_UPGRADE     = 'upgrade';
 GotandaDiamondMine.STATE_ANIMATION   = 'animation';
+GotandaDiamondMine.STATE_CHOOSE_ITEM = 'choose_item';
 GotandaDiamondMine.STATE_DEFEATED    = 'defeated';
 GotandaDiamondMine.STATE_VICTORY     = 'victory';
 
 GotandaDiamondMine.CLASSES = [
-  { 'HP': 10, 'STR': 3, "Items": '||||////%%' }
+  //{ 'HP': 10, 'STR': 3, "Luck": 2, "Items": '||||////%%' }
+  { 'HP': 100, "Items": '||||////%%' }
 ];
 
+//   0     , 1        , 2           , 3       , 4               , 5
 // [ symbol, item_name, level_number, [ x, y ], parameter_object, status_object ]
 GotandaDiamondMine.ITEMS = [
   [ '|', "a dagger",            1, [ null, null ], { "Physical Damage":  '1d4',     "Upgrade": '-5|', "Target Depth": 10, "Price": 10 }, null ],
@@ -281,6 +282,21 @@ GotandaDiamondMine.center = function (str, size) {
   return output;
 };
 
+GotandaDiamondMine.paste = function (array_a, array_b) {
+  var out = [];
+  for (var i = 0, al = array_a.length, bl = array_b.length, l = Math.max(al, bl); i < l; ++i) {
+    var add = [];
+    if (i < al) {
+      add = add.concat(array_a[i]);
+    }
+    if (i < bl) {
+      add = add.concat(array_b[i]);
+    }
+    out.push(add);
+  }
+  return out;
+};
+
 GotandaDiamondMine.prototype.changeState = function (state) {
   if (state === GotandaDiamondMine.STATE_TITLE) { // TITLE
     //
@@ -288,34 +304,29 @@ GotandaDiamondMine.prototype.changeState = function (state) {
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) { // CHOOSE HERO
     this.itemsInOriginalDeck = [];
     this.itemsInShop = [];
+    this.itemChoices = [];
     this.heroParameter = {}; // updated when choose hero
     this.heroStatus = { 'Damage': 0, '%': 100, '*': 0 };
     this.createHeroChoices();
     this.selectedHero = -1;
     this.depth = 0;
 
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) { // TOWN ITEMS
-    this.selectedItem = -1;
-
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) { // TOWN SHOP
-    this.createShopChoices();
-    this.selectedItem = -1;
-
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) { // TOWN MINE
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) { // CHOOSE MINE
     this.createMineChoices();
     this.selectedMine = -1;
 
-  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) { // CHOOSE ITEM
-    //this.selectedItem = -1;
+  } else if (state === GotandaDiamondMine.STATE_CONFIRM) { // CONFIRM NEXT WAVE
+    this.confirmingItem = -1;
+    this.selectedItem = -1;
+
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_HAND) { // CHOOSE HAND
+    //this.selectedItem = -1; don't reset selectedItem because the item is set on "STATE_CONFIRM" phase
 
   } else if (state === GotandaDiamondMine.STATE_PLACE) { // PLACE ITEM
     this.placingItem = this.itemsOnMap.filter(function (item) { return item[3][0] !== null && item[3][1] !== null; }).length; // filter is for undo
     this.selectedPlace = null;
     this.placeBlocked = false;
   
-  } else if (state === GotandaDiamondMine.STATE_CONFIRM) { // CONFIRM NEXT WAVE
-    this.confirmingItem = -1;
-
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) { // UPGRADE ITEM
     this.sacrificingItem = -1;
     this.canSacrifice = false;
@@ -325,12 +336,17 @@ GotandaDiamondMine.prototype.changeState = function (state) {
     this.units = [];
     this.unitsWait = [];
     for (var i = 0; i < wave[2]; ++i) {
-      // waves.push([ 'A', 'monster A', 2, [ null, null ], { HP: Math.round(10 * Math.pow(i, level)) } ]);
       this.units.push([ wave[0], wave[1], -1, [ null, null ], wave[4], { 'Damage': 0 } ]); // 0 is '>', so starts from -1
       this.unitsWait.push(i * 16);
     }
     this.itemsWait = [];
+
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) { // CHOOSE ITEM
+    this.createItemChoices();
+    this.selectedItem = -1;
+
   }
+  console.log(this.state + ' -> ' + state);
   this.state = state;
 };
 
@@ -410,39 +426,30 @@ GotandaDiamondMine.colorScreen = function (arr, color, mode, from_x, to_x) {
   return copied;
 };
 
-GotandaDiamondMine.EMPTY_LINE = [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '];
+GotandaDiamondMine.EMPTY_LINE = [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '];
 
 GotandaDiamondMine.EMPTY_BOX = [
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
-];
-
-GotandaDiamondMine.EMPTY_MINE_BOX = [
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']
 ];
 
 GotandaDiamondMine.EMPTY_LINED_BOX = [
-  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
-  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+']
+  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['|',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','|'],
+  ['+','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','-','+']
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -455,22 +462,20 @@ GotandaDiamondMine.prototype.point = function (x, y) {
     return this.pointTitle(x, y);
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) {
     return this.pointChooseHero(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    return this.pointTownItems(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    return this.pointTownShop(x, y);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return this.pointTownMine(x, y);
-  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
-    return this.pointChooseItem(x, y);
-  } else if (state === GotandaDiamondMine.STATE_PLACE) {
-    return this.pointPlace(x, y);
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
+    return this.pointChooseMine(x, y);
   } else if (state === GotandaDiamondMine.STATE_CONFIRM) {
     return this.pointConfirm(x, y);
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_HAND) {
+    return this.pointChooseHand(x, y);
+  } else if (state === GotandaDiamondMine.STATE_PLACE) {
+    return this.pointPlace(x, y);
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
     return this.pointUpgrade(x, y);
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
     return this.pointAnimation(x, y);
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+    return this.pointChooseItem(x, y);
   } else if (state === GotandaDiamondMine.STATE_DEFEATED) {
     return this.pointDefeated(x, y);
   } else if (state === GotandaDiamondMine.STATE_VICTORY) {
@@ -509,10 +514,8 @@ GotandaDiamondMine.prototype.pointChooseHero = function (x, y) {
       }
       this.createDeckFromTemplate();
 
-      //this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
-
       this.createMineChoices();
-      var selected_mine = this.mineChoices[1];
+      var selected_mine = this.mineChoices[0];
       this.createMap(selected_mine); // mapSymbol, mapColor, points, path are created
       this.createWaves(selected_mine); // wave, waves are created
       this.itemsOnMap = [];
@@ -525,86 +528,8 @@ GotandaDiamondMine.prototype.pointChooseHero = function (x, y) {
   }
 };
 
-GotandaDiamondMine.prototype.pointTownItems = function (x, y) {
-  if (0 <= x && x <= 8 && 3 <= y && y <= 5) { // Town Items
-    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
-    return true;
-  } else if (9 <= x && x <= 17 && 3 <= y && y <= 5) { // Town Shop
-    this.changeState(GotandaDiamondMine.STATE_TOWN_SHOP);
-    return true;
-  } else if (18 <= x && x <= 26 && 3 <= y && y <= 5) { // Town Mine
-    this.changeState(GotandaDiamondMine.STATE_TOWN_MINE);
-    return true;
-  } else if (0 <= x && x <= 26 && 16 <= y && y <= 47) { // Item Select
-    var index = y - 16;
-    if (this.selectedItem === index) {
-      this.selectedItem = -1;
-      return true;
-    } else if (this.itemsInOriginalDeck[index]) {
-      this.selectedItem = index;
-      return true;
-    }
-  } else if (0 <= x && x <= 26 && 0 <= y && y <= 2) { // Destroy
-    
-  }
-};
-
-GotandaDiamondMine.prototype.pointTownShop = function (x, y) {
-  if (0 <= x && x <= 8 && 3 <= y && y <= 5) { // Town Items
-    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
-    return true;
-  } else if (9 <= x && x <= 17 && 3 <= y && y <= 5) { // Town Shop
-    this.changeState(GotandaDiamondMine.STATE_TOWN_SHOP);
-    return true;
-  } else if (18 <= x && x <= 26 && 3 <= y && y <= 5) { // Town Mine
-    this.changeState(GotandaDiamondMine.STATE_TOWN_MINE);
-    return true;
-  } else if (0 <= x && x <= 26 && 16 <= y && y <= 47) { // Item Select
-    var index = y - 16;
-    if (this.selectedItem === index) {
-      this.selectedItem = -1;
-      return true;
-    } else if (this.itemsInShop[index]) {
-      this.selectedItem = index;
-      return true;
-    }
-  } else if (0 <= x && x <= 26 && 0 <= y && y <= 2) { // Buy
-    
-  }
-};
-
-GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
-  if (0 <= x && x <= 8 && 3 <= y && y <= 5) { // Town Items
-    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
-    return true;
-  } else if (9 <= x && x <= 17 && 3 <= y && y <= 5) { // Town Shop
-    this.changeState(GotandaDiamondMine.STATE_TOWN_SHOP);
-    return true;
-  } else if (18 <= x && x <= 26 && 3 <= y && y <= 5) { // Town Mine
-    this.changeState(GotandaDiamondMine.STATE_TOWN_MINE);
-    return true;
-  } else if (0 <= x && x <= 53 && 6 <= y && y <= 11 && 1 <= this.mineChoices.length) { // Mine 1
-    this.selectedMine = 0;
-    return true;
-  } else if (0 <= x && x <= 53 && 12 <= y && y <= 17 && 2 <= this.mineChoices.length) { // Mine 2
-    this.selectedMine = 1;
-    return true;
-  } else if (0 <= x && x <= 53 && 18 <= y && y <= 23 && 3 <= this.mineChoices.length) { // Mine 3
-    this.selectedMine = 2;
-    return true;
-  } else if (0 <= x && x <= 53 && 24 <= y && y <= 29 && 4 <= this.mineChoices.length) { // Mine 4
-    this.selectedMine = 3;
-    return true;
-  } else if (0 <= x && x <= 53 && 30 <= y && y <= 35 && 5 <= this.mineChoices.length) { // Mine 5
-    this.selectedMine = 4;
-    return true;
-  } else if (0 <= x && x <= 53 && 36 <= y && y <= 41 && 6 <= this.mineChoices.length) { // Mine 6
-    this.selectedMine = 5;
-    return true;
-  } else if (0 <= x && x <= 53 && 42 <= y && y <= 47 && 7 <= this.mineChoices.length) { // Mine 7
-    this.selectedMine = 6;
-    return true;
-  } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose a mine
+GotandaDiamondMine.prototype.pointChooseMine = function (x, y) {
+  if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose a mine
     if (this.selectedMine !== -1) {
       var selected_mine = this.mineChoices[this.selectedMine];
       this.createMap(selected_mine); // mapSymbol, mapColor, points, path are created
@@ -616,75 +541,15 @@ GotandaDiamondMine.prototype.pointTownMine = function (x, y) {
       this.changeState(GotandaDiamondMine.STATE_CONFIRM);
       return true;
     }
-  }
-};
-
-GotandaDiamondMine.prototype.pointChooseItem = function (x, y) {
-  if (0 <= x && x <= 53 && 10 <= y && y <= 36) { // Map is cancel
-    this.selectedItem = -1;
-    this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+  } else if (0 <= x && x <= 53 && 10 <= y && y <= 18 && 1 <= this.mineChoices.length) { // Mine 1
+    this.selectedMine = 0;
     return true;
-  } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose an item
-    if (this.selectedItem !== -1) {
-      this.itemsOnMap.push(this.itemsOnHand[this.selectedItem].concat());
-      this.itemsOnHand.splice(this.selectedItem, 1);
-      this.heroStatus['%'] -= Math.pow(2, this.itemsOnMap[this.itemsOnMap.length - 1][2]); // L1: 2, L2: 4, L3: 8, ...
-      if (0 < this.heroStatus['%']) {
-        this.changeState(GotandaDiamondMine.STATE_PLACE);
-      } else {
-        this.changeState(GotandaDiamondMine.STATE_DEFEATED);
-      }
-      return true;
-    }
-  } else if (0 <= x && x <= 27 && 37 <= y && y <= 47) { // Hand list
-    var selected_item = (y - 37 < this.itemsOnHand.length ? y - 37 : -1);
-    if (selected_item !== -1 && this.selectedItem !== selected_item) {
-      this.selectedItem = selected_item;
-      this.changeState(GotandaDiamondMine.STATE_CHOOSE_ITEM);
-      return true;
-    }
-  } else if (28 <= x && x <= 53 && 37 <= y && y <= 47) { // Item list 
-    this.selectedItem = -1;
-    this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+  } else if (0 <= x && x <= 53 && 19 <= y && y <= 27 && 2 <= this.mineChoices.length) { // Mine 2
+    this.selectedMine = 1;
     return true;
-  }
-};
-
-GotandaDiamondMine.prototype.pointPlace = function (x, y) {
-  if (0 <= x && x <= 53 && 10 <= y && y <= 36) { // Map
-    if (this.mapSymbol[y - 10][x] === '.') {
-      if (this.selectedPlace) { // Cancel post-place before
-        this.mapSymbol[this.selectedPlace[1]][this.selectedPlace[0]] = '.';
-        this.mapColor[this.selectedPlace[1]][this.selectedPlace[0]] = 'gray';
-      }
-      this.mapSymbol[y - 10][x] = this.itemsOnMap[this.placingItem][0];
-      if (this.calculatePath()) {
-        this.selectedPlace = [ x, y - 10 ];
-        this.mapColor[y - 10][x] = 'white'; // do after "calculatePath", for save yellow color if cannot place
-        this.placeBlocked = false;
-      } else { // blocking, cannot place
-        if (this.selectedPlace) { // Re-place
-          this.mapSymbol[this.selectedPlace[1]][this.selectedPlace[0]] = this.itemsOnMap[this.placingItem][0];
-          this.mapColor[this.selectedPlace[1]][this.selectedPlace[0]] = 'white';
-        }
-        this.mapSymbol[y - 10][x] = '.';
-        this.placeBlocked = true;
-      }
-      return true;
-    }
-
-  } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // OK
-    if (this.selectedPlace) { // OK
-      this.itemsOnMap[this.placingItem][3] = this.selectedPlace;
-      this.addItemToMap(this.itemsOnMap[this.placingItem]);
-      ++this.placingItem;
-      if (this.placingItem === this.itemsOnMap.length) {
-        this.changeState(GotandaDiamondMine.STATE_CONFIRM);
-      } else {
-        this.selectedPlace = null;
-      }
-      return true;
-    }
+  } else if (0 <= x && x <= 53 && 28 <= y && y <= 36 && 3 <= this.mineChoices.length) { // Mine 3
+    this.selectedMine = 2;
+    return true;
   }
 };
 
@@ -696,7 +561,7 @@ GotandaDiamondMine.prototype.pointConfirm = function (x, y) {
     var selected_item = (y - 37 < this.itemsOnHand.length ? y - 37 : -1);
     if (selected_item !== -1) {
       this.selectedItem = selected_item;
-      this.changeState(GotandaDiamondMine.STATE_CHOOSE_ITEM);
+      this.changeState(GotandaDiamondMine.STATE_CHOOSE_HAND);
       return true;
     }
 
@@ -723,6 +588,78 @@ GotandaDiamondMine.prototype.pointConfirmItem = function (pointed_item) {
   this.confirmingItem = pointed_item;
   this.changeState(GotandaDiamondMine.STATE_UPGRADE);
   return true;
+};
+
+GotandaDiamondMine.prototype.pointChooseHand = function (x, y) {
+  if (0 <= x && x <= 53 && 10 <= y && y <= 36) { // Map is cancel
+    this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+    return true;
+  } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose an item
+    if (this.selectedItem !== -1) {
+      this.itemsOnMap.push(this.itemsOnHand[this.selectedItem].concat());
+      this.itemsOnHand.splice(this.selectedItem, 1);
+      this.heroStatus['%'] -= Math.pow(2, this.itemsOnMap[this.itemsOnMap.length - 1][2]); // L1: 2, L2: 4, L3: 8, ...
+      if (0 < this.heroStatus['%']) {
+        this.changeState(GotandaDiamondMine.STATE_PLACE);
+      } else {
+        this.changeState(GotandaDiamondMine.STATE_DEFEATED);
+      }
+      return true;
+    }
+  } else if (0 <= x && x <= 27 && 37 <= y && y <= 47) { // Hand list
+    var selected_item = (y - 37 < this.itemsOnHand.length ? y - 37 : -1);
+    if (selected_item !== -1) {
+      if (this.selectedItem !== selected_item) { // Choose different item
+        this.selectedItem = selected_item;
+        return true;
+      } else if (this.selectedItem === selected_item) { // Choose same item => cancel
+        this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+        return true;
+      }
+    }
+  } else if (28 <= x && x <= 53 && 37 <= y && y <= 47) { // Item list 
+    this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+    return true;
+  }
+};
+
+GotandaDiamondMine.prototype.pointPlace = function (x, y) {
+  var map_pos_y = 10;
+  if (0 <= x && x <= 53 && map_pos_y <= y && y <= map_pos_y + 26) { // Map
+    if (this.mapSymbol[y - map_pos_y][x] === '.') {
+      if (this.selectedPlace) { // Cancel post-place before
+        this.mapSymbol[this.selectedPlace[1]][this.selectedPlace[0]] = '.';
+        this.mapColor[this.selectedPlace[1]][this.selectedPlace[0]] = 'gray';
+      }
+      this.mapSymbol[y - map_pos_y][x] = this.itemsOnMap[this.placingItem][0];
+      if (this.calculatePath()) {
+        this.selectedPlace = [ x, y - map_pos_y ];
+        this.mapColor[y - map_pos_y][x] = 'white'; // do after "calculatePath", for save yellow color if cannot place
+        this.placeBlocked = false;
+      } else { // blocking, cannot place
+        if (this.selectedPlace) { // Re-place
+          this.mapSymbol[this.selectedPlace[1]][this.selectedPlace[0]] = this.itemsOnMap[this.placingItem][0];
+          this.mapColor[this.selectedPlace[1]][this.selectedPlace[0]] = 'white';
+        }
+        this.mapSymbol[y - map_pos_y][x] = '.';
+        this.placeBlocked = true;
+      }
+      return true;
+    }
+
+  } else if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // OK
+    if (this.selectedPlace) { // OK
+      this.itemsOnMap[this.placingItem][3] = this.selectedPlace;
+      this.addItemToMap(this.itemsOnMap[this.placingItem]);
+      ++this.placingItem;
+      if (this.placingItem === this.itemsOnMap.length) {
+        this.changeState(GotandaDiamondMine.STATE_CONFIRM);
+      } else {
+        this.selectedPlace = null;
+      }
+      return true;
+    }
+  }
 };
 
 GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
@@ -763,7 +700,7 @@ GotandaDiamondMine.prototype.pointUpgrade = function (x, y) {
       this.addItemToMap(confirming_item);
       this.confirmingItem = -1;
 
-      // delete sacrificed item
+      // delete sacrificed item -> become rock
       this.removeItemFromMap(this.itemsOnMap[this.sacrificingItem]);
       var before_sac_pos = this.itemsOnMap[this.sacrificingItem][3];
       this.mapSymbol[before_sac_pos[1]][before_sac_pos[0]] = '`';
@@ -905,6 +842,7 @@ GotandaDiamondMine.prototype.actionItem = function (item, units) {
   }
 };
 
+// Add the power to status
 GotandaDiamondMine.prototype.addItemToMap = function (item) {
   if (!item[5]) {
     item[5] = {};
@@ -917,8 +855,28 @@ GotandaDiamondMine.prototype.addItemToMap = function (item) {
   item_status['Added'] = true;
 };
 
+// Remove the power from status
 GotandaDiamondMine.prototype.removeItemFromMap = function (item) {
   
+};
+
+GotandaDiamondMine.prototype.pointChooseItem = function (x, y) { // after victory
+  if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Choose a item
+    if (this.selectedItem !== -1) {
+      this.itemsInOriginalDeck.push(this.itemChoices[this.selectedItem]);
+      this.changeState(GotandaDiamondMine.STATE_CHOOSE_MINE);
+      return true;
+    }
+  } else if (0 <= x && x <= 53 && 10 <= y && y <= 18 && 1 <= this.itemChoices.length) { // Item 1
+    this.selectedItem = 0;
+    return true;
+  } else if (0 <= x && x <= 53 && 19 <= y && y <= 27 && 2 <= this.itemChoices.length) { // Item 2
+    this.selectedItem = 1;
+    return true;
+  } else if (0 <= x && x <= 53 && 28 <= y && y <= 36 && 3 <= this.itemChoices.length) { // Item 3
+    this.selectedItem = 2;
+    return true;
+  }
 };
 
 GotandaDiamondMine.prototype.pointDefeated = function (x, y) {
@@ -929,8 +887,8 @@ GotandaDiamondMine.prototype.pointDefeated = function (x, y) {
 };
 
 GotandaDiamondMine.prototype.pointVictory = function (x, y) {
-  if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Back to the town
-    this.changeState(GotandaDiamondMine.STATE_TOWN_ITEMS);
+  if (0 <= x && x <= 53 && 0 <= y && y <= 2) { // Next choose item
+    this.changeState(GotandaDiamondMine.STATE_CHOOSE_ITEM);
     return true;
   }
 };
@@ -988,8 +946,8 @@ GotandaDiamondMine.prototype.createHeroChoices = function () {
 GotandaDiamondMine.prototype.createMineChoices = function () {
   // TODO
   this.mineChoices = [
-    { depth: this.depth + 100, map: 'Flats', waves:5 },
-    { depth: this.depth + 200, map: 'Small', waves:20 },
+    { depth: this.depth + 100, map: 'Small', waves:2 },
+    { depth: this.depth + 200, map: 'Flats', waves:20 },
     { depth: this.depth + 300, map: 'Paddy', waves:30 }
   ];
 };
@@ -1021,12 +979,26 @@ GotandaDiamondMine.prototype.createShopChoices = function () {
   }
 };
 
+GotandaDiamondMine.prototype.createItemChoices = function () {
+  var max = 3; // TODO
+  var array = this.heroParameter['Items'].split('');
+  var check_symbol = function (symbol) {
+    return function (item) {
+      return item[0] === symbol && item[2] === 1; // Level 1
+    };
+  };
+  for (var i = this.itemChoices.length; i < max; ++i) {
+    this.itemChoices.push(this.chance.shuffle(GotandaDiamondMine.ITEMS.filter(check_symbol(this.chance.shuffle(array)[0])))[0]);
+  }
+};
+
 GotandaDiamondMine.prototype.createItemsOnHand = function (reset_ok) {
   if (reset_ok && this.itemsOnHand.length === 0 && this.itemsInDeck.length === 0) { // reset deck
     this.itemsInDeck = this.chance.shuffle(this.itemsInOriginalDeck);
-  }
-  if (this.itemsOnHand.length !== 3 && this.itemsInDeck.length !== 0) { // draw deck
-    while (this.itemsInDeck.length !== 0 && this.itemsOnHand.length < 3) {
+
+  } else if (this.itemsOnHand.length <= 10 && this.itemsInDeck.length !== 0) { // draw deck
+    var draw_num = 2;
+    while (this.itemsInDeck.length !== 0 && this.itemsOnHand.length <= 10 && 0 <= --draw_num) {
       this.itemsOnHand.push(this.itemsInDeck.pop());
     }
   }
@@ -1041,14 +1013,12 @@ GotandaDiamondMine.prototype.getScreen = function () {
     return this.getScreenTitle();
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_HERO) {
     return this.getScreenToChooseHero();
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    return this.getScreenAtTownItems();
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    return this.getScreenAtTownShop();
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return this.getScreenAtTownMine();
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
+    return this.getScreenToChooseMine();
   } else if (state === GotandaDiamondMine.STATE_UPGRADE) {
     return this.getScreenToUpgrade();
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+    return this.getScreenToChooseItem();
   } else {
     return this.getScreenDefault();
   }
@@ -1072,25 +1042,13 @@ GotandaDiamondMine.prototype.getButton = function () {
     } else {
       return this.getButtonBox("Choose this hero", 'lime');
     }
-  } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    if (this.selectedItem === -1) {
-      return this.getButtonBox("Which items to see?", 'gray');
-    } else {
-      return this.getButtonBox("Destroy this item", 'lime');  
-    }
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    if (this.selectedItem === -1) {
-      return this.getButtonBox("Which items to buy?", 'gray');
-    } else {
-      return this.getButtonBox("Buy this item", 'lime');
-    }
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
     if (this.selectedMine === -1) {
-      return this.getButtonBox("Choose a mine", 'gray');
+      return this.getButtonBox("Choose a next mine", 'gray');
     } else {
       return this.getButtonBox("Choose this mine", 'lime');
     }
-  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_HAND) {
     if (this.selectedItem === -1) {
       return this.getButtonBox("Which items to place?", 'gray');
     } else {
@@ -1118,10 +1076,16 @@ GotandaDiamondMine.prototype.getButton = function () {
     }
   } else if (state === GotandaDiamondMine.STATE_ANIMATION) {
     return this.getButtonBox("Now progressing", 'gray');
+  } else if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+    if (this.selectedItem === -1) {
+      return this.getButtonBox("Which item to gain?", 'gray');
+    } else {
+      return this.getButtonBox("Choose this item", 'lime');
+    }
   } else if (state === GotandaDiamondMine.STATE_DEFEATED) {
     return this.getButtonBox("You died", 'lime');
   } else if (state === GotandaDiamondMine.STATE_VICTORY) {
-    return this.getButtonBox("Back to the town", 'lime');
+    return this.getButtonBox("You have finished this work; Take the loot", 'lime');
   } else {
     return [ GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE, GotandaDiamondMine.EMPTY_LINE ];
   }
@@ -1151,71 +1115,40 @@ GotandaDiamondMine.prototype.getDetailHeroInfo = function (hero_info) { // 54 x 
 
 GotandaDiamondMine.prototype.getScreenToChooseHero = function () {
   var heroes = [];
-  for (var i = 0; i < 5; ++i) {
+  var max_hero_num = 5;
+  for (var i = 0; i < max_hero_num; ++i) {
     var display_hero = this.heroChoices[i] ? this.getDetailHeroInfo(this.heroChoices[i]) : GotandaDiamondMine.EMPTY_BOX;
     heroes = heroes.concat(i === this.selectedHero ? display_hero : GotandaDiamondMine.colorScreen(display_hero, 'green'));
   }
   return [].concat(this.getButton(), heroes);
 };
 
-GotandaDiamondMine.prototype.getTownTab = function () {
-  var state = this.state;
-  if (state === GotandaDiamondMine.STATE_TOWN_ITEMS) {
-    return GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen([
-      '         +-------++-------+'.split(''),
-      '  Items  | Shop  || Mine  |'.split(''),
-      '         +-------++-------+'.split('')
-    ], 'gray', 'x', 0, 8), 'lime', 'x', 9, 17), 'lime', 'x', 18, 26);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    return GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen([
-      '+-------+         +-------+'.split(''),
-      '| Items |  Shop   | Mine  |'.split(''),
-      '--------+         +-------+'.split('')
-    ], 'lime', 'x', 0, 8), 'gray', 'x', 9, 17), 'lime', 'x', 18, 26);
-  } else if (state === GotandaDiamondMine.STATE_TOWN_MINE) {
-    return GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen(GotandaDiamondMine.colorScreen([
-      '+-------++-------+         '.split(''),
-      '| Items || Shop  |  Mine   '.split(''),
-      '--------++-------+         '.split('')
-    ], 'lime', 'x', 0, 8), 'lime', 'x', 9, 17), 'gray', 'x', 18, 26);
-  }
-};
-
-GotandaDiamondMine.prototype.getScreenAtTownItems = function () {
-  var selected_item = this.selectedItem === -1 ? GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray') : this.getDetailItemInfo(this.itemsInOriginalDeck[this.selectedItem]);
-  return [].concat(this.getButton(), this.getStatus(), this.getTownTab(), selected_item, this.getItemInfo(true));
-};
-
-GotandaDiamondMine.prototype.getScreenAtTownShop = function () {
-  var selected_item = this.selectedItem === -1 ? GotandaDiamondMine.colorScreen(GotandaDiamondMine.EMPTY_LINED_BOX, 'gray') : this.getDetailItemInfo(this.itemsInShop[this.selectedItem], true);
-  return [].concat(this.getButton(), this.getStatus(), this.getTownTab(), selected_item, this.getItemInfo(true));
-};
-
-GotandaDiamondMine.prototype.getDetailMineInfo = function (mine_info) { // 54 x 6
+GotandaDiamondMine.prototype.getDetailMineInfo = function (mine_info) { // 54 x 9
   var output = [ '+----------------------------------------------------+'.split('') ];
   var i = 0;
   for (var key in mine_info ) {
     output.push( ('|' + mine_info[key] + ' ' + this.__(key) + '                                                      ').split('') );
     ++i;
   }
-  for (i; i < 4; ++i) {
+  for (i; i < 7; ++i) {
     output.push('|                                                    |'.split(''));
   }
-  for (var i = 1; i <= 4; ++i) {
+  for (var i = 1; i <= 7; ++i) {
     output[i][53] = '|';
   }
   output.push('+----------------------------------------------------+'.split(''));
   return output;
 };
 
-GotandaDiamondMine.prototype.getScreenAtTownMine = function () {
+GotandaDiamondMine.prototype.getScreenToChooseMine = function () {
   var mines = [];
-  for (var i = 0; i < 7; ++i) {
-    var display_mine = this.mineChoices[i] ? this.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_MINE_BOX;
+  for (var i = 0; i < 3; ++i) {
+    var display_mine = this.mineChoices[i] ? this.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_LINED_BOX;
     mines = mines.concat(i === this.selectedMine ? display_mine : GotandaDiamondMine.colorScreen(display_mine, 'green'));
   }
-  return [].concat(this.getButton(), this.getTownTab(), mines);
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), mines, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo2()));
 };
+
 
 GotandaDiamondMine.prototype.getDetailItemInfo = function (item, in_shop) { // 54 x 9
   var output = [ '+----------------------------------------------------+'.split('') ];
@@ -1247,25 +1180,10 @@ GotandaDiamondMine.prototype.getDetailItemInfo = function (item, in_shop) { // 5
 GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
   var items = [];
   for (var i = 0; i < 3; ++i) {
-    var item = this.itemsOnHand[i] ? this.getDetailItemInfo(this.itemsOnHand[i]) : GotandaDiamondMine.EMPTY_BOX;
+    var item = this.itemChoices[i] ? this.getDetailItemInfo(this.itemChoices[i]) : GotandaDiamondMine.EMPTY_BOX;
     items = items.concat(i === this.selectedItem ? item : GotandaDiamondMine.colorScreen(item, 'green'));
   }
-  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), items, this.getItemInfo());
-};
-
-GotandaDiamondMine.paste = function (array_a, array_b) {
-  var out = [];
-  for (var i = 0, al = array_a.length, bl = array_b.length, l = Math.max(al, bl); i < l; ++i) {
-    var add = [];
-    if (i < al) {
-      add = add.concat(array_a[i]);
-    }
-    if (i < bl) {
-      add = add.concat(array_b[i]);
-    }
-    out.push(add);
-  }
-  return out;
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), items, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo2()));
 };
 
 GotandaDiamondMine.prototype.getScreenToUpgrade = function () {
@@ -1355,34 +1273,13 @@ GotandaDiamondMine.prototype.getStatus = function () {
   var hero_param = this.heroParameter;
   var hero_status = this.heroStatus;
   var info_str = (hero_param['HP'] - hero_status['Damage']) + '/' + hero_param['HP'] + 'HP ' + hero_status['%'] + '% ' + hero_status['*'] + '* ';
-  if (state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-    info_str += this.itemsInOriginalDeck.length + 'ITEMS ';
-  } else {
-    info_str += this.itemsOnHand.length + '+' + this.itemsInDeck.length + 'Items ';  
-  }
+  info_str += this.itemsOnHand.length + '+' + this.itemsInDeck.length + 'Items ';  
   for (var key in hero_param) {
     if (key !== 'HP') {
       info_str += hero_param[key] + key + ' ';
     }
   }
   return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split('') ], 'gray');
-};
-
-GotandaDiamondMine.getItemInfoLine = function (item, in_shop) {
-  var info_str = item[0] + item[2];
-  for (var key in item[4]) {
-    if (key !== 'Target Depth' && key !== 'Price') {
-      info_str += ' ' + item[4][key] + GotandaDiamondMine.ITEM_ABBR[key];
-    }
-  }
-  var output = (info_str + '                           ').split('');
-  if (in_shop) {
-    var price_str_arr = (' ' + item[4]['Price'] + '*').split('');
-    for (var x = 54 - price_str_arr.length; x < 54; ++x) {
-      output[x] = price_str_arr[x - 54 + price_str_arr.length];
-    }
-  }
-  return [ output ];
 };
 
 GotandaDiamondMine.getItemInfoLine2 = function (item) {
@@ -1395,39 +1292,6 @@ GotandaDiamondMine.getItemInfoLine2 = function (item) {
   var output = (info_str + '                           ').split('');
   output.length = 27;
   return [ output ];
-};
-
-GotandaDiamondMine.prototype.getItemInfo = function () {
-  var state = this.state;
-  var info = [];
-  var indexes = this.indexesToPoint = []; // using to point
-  var items_to_display = (state === GotandaDiamondMine.STATE_TOWN_ITEMS
-    ? this.itemsInOriginalDeck
-    : state === GotandaDiamondMine.STATE_TOWN_SHOP ? this.itemsInShop : this.itemsOnMap);
-  var display_num = state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP ? 32 : 11;
-  for (var i = 0; i < display_num; ++i) { 
-    var index = Math.min(items_to_display.length > display_num ? items_to_display.length - display_num + i : i);
-    if (items_to_display.length <= index) {
-      info.push(GotandaDiamondMine.EMPTY_LINE);
-      indexes.push(-1);
-    } else {
-      var info_line = GotandaDiamondMine.getItemInfoLine(items_to_display[index], state === GotandaDiamondMine.STATE_TOWN_SHOP);
-      if (state === GotandaDiamondMine.STATE_PLACE && index !== this.placingItem) {
-        info_line = GotandaDiamondMine.colorScreen(info_line, 'gray');
-      } else if (state === GotandaDiamondMine.STATE_TOWN_ITEMS || state === GotandaDiamondMine.STATE_TOWN_SHOP) {
-        info_line = GotandaDiamondMine.colorScreen(info_line, index !== this.selectedItem ? 'green' : 'aqua');
-      }
-      info.push(info_line[0]);
-      indexes.push(index);
-    }
-  }
-
-  if (state === GotandaDiamondMine.STATE_CONFIRM) {
-    info = GotandaDiamondMine.colorScreen(info, 'green');
-  } else if (state !== GotandaDiamondMine.STATE_TOWN_ITEMS && state !== GotandaDiamondMine.STATE_TOWN_SHOP && state !== GotandaDiamondMine.STATE_PLACE) {
-    info = GotandaDiamondMine.colorScreen(info, 'gray');
-  }
-  return info;
 };
 
 GotandaDiamondMine.prototype.getHandInfo = function (is_hand) {
@@ -1443,9 +1307,9 @@ GotandaDiamondMine.prototype.getHandInfo = function (is_hand) {
       indexes.push(-1);
     } else {
       var info_line = GotandaDiamondMine.getItemInfoLine2(items_on_hand[index]);
-      if (state === GotandaDiamondMine.STATE_CHOOSE_ITEM && this.selectedItem === index) {
+      if (state === GotandaDiamondMine.STATE_CHOOSE_HAND && this.selectedItem === index) {
         info_line = GotandaDiamondMine.colorScreen(info_line, 'aqua');
-      } else if (state === GotandaDiamondMine.STATE_CONFIRM || state === GotandaDiamondMine.STATE_CHOOSE_ITEM) {
+      } else if (state === GotandaDiamondMine.STATE_CONFIRM || state === GotandaDiamondMine.STATE_CHOOSE_HAND) {
         info_line = GotandaDiamondMine.colorScreen(info_line, 'green');
       } else {
         info_line = GotandaDiamondMine.colorScreen(info_line, 'gray');
@@ -1493,6 +1357,7 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
   var indexes = this.indexesToPoint = []; // using to point
   var items_on_map = this.itemsOnMap;
   var display_num = 11;
+  var center_num = 5;
   if (-1 < this.sacrificingItem && display_num <= Math.abs(this.confirmingItem - this.sacrificingItem)) {
     second_offset = Math.abs(this.confirmingItem - this.sacrificingItem) - display_num + 1;
   }
@@ -1502,27 +1367,27 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
     if (-1 < this.sacrificingItem) {
       index = Math.min(index, this.sacrificingItem + i);
     }
-    if (second_offset && 5 < i) {
+    if (second_offset && center_num < i) {
       index += second_offset;
     }
     
-    if (second_offset && i === 5) {
+    if (second_offset && i === center_num) {
       info.push('---------------------------'.split(''));
     } else if (items_on_map.length <= index) {
       info.push(GotandaDiamondMine.EMPTY_LINE);
     } else if (index === this.confirmingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'aqua')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'aqua')[0]);
     } else if (index === this.sacrificingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'fuchsia')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'fuchsia')[0]);
     } else {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'green')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'green')[0]);
     }
-    indexes.push(second_offset && i === 5 || items_on_map.length <= index ? -1 : index);
+    indexes.push(second_offset && i === center_num || items_on_map.length <= index ? -1 : index);
   }
   return info;
 };
 
-},{"./__":2,"chance":9,"pathfinding":11}],2:[function(require,module,exports){
+},{"./__":2,"chance":8,"pathfinding":13}],2:[function(require,module,exports){
 var EAW = require('eastasianwidth');
 var __ = function (str) {
   return __[__.lang] && __[__.lang][str] || str;
@@ -1550,14 +1415,14 @@ __.loadLang = function (lang_name, lang_map, is_east_asia) {
   __[lang_name] = obj;
 };
 
-__.loadLang("ja", require('./__ja.po2json.json'), true);
+__.loadLang("ja", require('./__ja.po.json'), true);
 
-//__.loadLang("ab", require('./__ab.po2json.json'));
+//__.loadLang("ab", require('./__ab.po.json'));
 
 module.exports = __;
 
-},{"./__ja.po2json.json":3,"eastasianwidth":10}],3:[function(require,module,exports){
-module.exports={"Items":"","Physical Damage":"物理ダメージ","Upgrade":"でアップグレード","a dagger":"ダガー","a short sword":"短剣","a pole axe":"ポールアックス","Energy":"エネルギー","an apple":"リンゴ","Physical Damage Buff":"物理ダメージUP","an amulet of damage":"ダメージの首飾り","Armor Class":"アーマークラス","\\ Luck Bonus":"\\ 幸運UP","a ring armour":"リングアーマー","a rock":"石","An edged weapon":"","A hafted weapon":"","A pole weapon":"","Fire Damage":"","Cold Damage":"","Lightning Damage":"","Poison Damage":"","All Resistance":"","Fire Resistance":"","Cold Resistance":"","Lightning Resistance":"","Poison Resistance":"","HP":"HP","*":"*","Small":"小部屋","Flats":"平野","Paddy":"田んぼ","Play":"プレイする","Choose a hero":"ヒーローを選んでください","Choose this hero":"このヒーローを選ぶ","Which items to see?":"どのアイテムを見ますか？","Destroy this item":"このアイテムを壊す","Which items to buy?":"どのアイテムを買いますか？","Buy this item":"このアイテムを買う","Choose a mine":"発掘場所を選んでください","Choose this mine":"この場所にする","Which items to place?":"アイテムを選んでください","Choose this item":"このアイテムにする","Blocking!":"経路がありません","Choose a place":"場所を選んでください","Choose this place":"この場所にする","Preview the path":"経路をプレビューする","Go to next wave":"次のウェーブ","Replace this item":"アイテムを再配置する","Combine these items":"アイテムを結合する","Cannot combine!":"その組み合わせは結合できません！","Now progressing":"処理中です…","You died":"あなたは死にました","Back to the town":"町に戻ります"}
+},{"./__ja.po.json":3,"eastasianwidth":9}],3:[function(require,module,exports){
+module.exports={"":"Project-Id-Version: PACKAGE VERSION\nReport-Msgid-Bugs-To: \nPOT-Creation-Date: 2015-12-26 05:34+0900\nPO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\nLast-Translator: FULL NAME <EMAIL@ADDRESS>\nLanguage-Team: LANGUAGE <LL@li.org>\nLanguage: \nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n","*":"*","A hafted weapon":"","A pole weapon":"","All Resistance":"","An edged weapon":"","Armor Class":"アーマークラス","Blocking!":"経路がありません","Buy this item":"このアイテムを買う","Cannot combine!":"その組み合わせは結合できません！","Choose a hero":"ヒーローを選んでください","Choose a next mine":"採掘する次の坑道を選んでください","Choose a place":"場所を選んでください","Choose this hero":"このヒーローを選ぶ","Choose this item":"このアイテムにする","Choose this mine":"この場所にする","Choose this place":"この場所にする","Cold Damage":"","Cold Resistance":"","Combine these items":"アイテムを結合する","Energy":"エネルギー","Fire Damage":"","Fire Resistance":"","Flats":"平野","Go to next wave":"次のウェーブ","HP":"HP","Items":"","Lightning Damage":"","Lightning Resistance":"","Luck":"幸運","Now progressing":"処理中です…","Paddy":"田んぼ","Physical Damage":"物理ダメージ","Physical Damage Buff":"物理ダメージUP","Play":"プレイする","Poison Damage":"毒ダメージ","Poison Resistance":"毒耐性","Preview the path":"経路をプレビューする","Price":"価格","Replace this item":"アイテムを再配置する","Small":"小部屋","Target Depth":"","Upgrade":"でアップグレード","Which item to gain?":"どのアイテムを獲得しますか？","Which items to buy?":"どのアイテムを買いますか？","Which items to place?":"アイテムを選んでください","Which items to see?":"どのアイテムを見ますか？","You died":"あなたは死にました","You have finished this work; Take the loot":"この坑道の採掘を終えました; 戦利品を獲得します","\\ Luck Bonus":"\\ 幸運UP","a dagger":"ダガー","a pole axe":"ポールアックス","a ring armour":"リングアーマー","a rock":"石","a short sword":"短剣","an amulet of damage":"ダメージの首飾り","an apple":"リンゴ"}
 },{}],4:[function(require,module,exports){
 var GotandaDiamondMine = require('./GotandaDiamondMine');
 
@@ -1800,16 +1665,146 @@ GotandaDiamondMine.prototype.startAnimation = function () {
 };
 
 },{"./GotandaDiamondMine":1}],5:[function(require,module,exports){
+var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+;(function (exports) {
+	'use strict';
+
+  var Arr = (typeof Uint8Array !== 'undefined')
+    ? Uint8Array
+    : Array
+
+	var PLUS   = '+'.charCodeAt(0)
+	var SLASH  = '/'.charCodeAt(0)
+	var NUMBER = '0'.charCodeAt(0)
+	var LOWER  = 'a'.charCodeAt(0)
+	var UPPER  = 'A'.charCodeAt(0)
+	var PLUS_URL_SAFE = '-'.charCodeAt(0)
+	var SLASH_URL_SAFE = '_'.charCodeAt(0)
+
+	function decode (elt) {
+		var code = elt.charCodeAt(0)
+		if (code === PLUS ||
+		    code === PLUS_URL_SAFE)
+			return 62 // '+'
+		if (code === SLASH ||
+		    code === SLASH_URL_SAFE)
+			return 63 // '/'
+		if (code < NUMBER)
+			return -1 //no match
+		if (code < NUMBER + 10)
+			return code - NUMBER + 26 + 26
+		if (code < UPPER + 26)
+			return code - UPPER
+		if (code < LOWER + 26)
+			return code - LOWER + 26
+	}
+
+	function b64ToByteArray (b64) {
+		var i, j, l, tmp, placeHolders, arr
+
+		if (b64.length % 4 > 0) {
+			throw new Error('Invalid string. Length must be a multiple of 4')
+		}
+
+		// the number of equal signs (place holders)
+		// if there are two placeholders, than the two characters before it
+		// represent one byte
+		// if there is only one, then the three characters before it represent 2 bytes
+		// this is just a cheap hack to not do indexOf twice
+		var len = b64.length
+		placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+
+		// base64 is 4/3 + up to two characters of the original data
+		arr = new Arr(b64.length * 3 / 4 - placeHolders)
+
+		// if there are placeholders, only get up to the last complete 4 chars
+		l = placeHolders > 0 ? b64.length - 4 : b64.length
+
+		var L = 0
+
+		function push (v) {
+			arr[L++] = v
+		}
+
+		for (i = 0, j = 0; i < l; i += 4, j += 3) {
+			tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
+			push((tmp & 0xFF0000) >> 16)
+			push((tmp & 0xFF00) >> 8)
+			push(tmp & 0xFF)
+		}
+
+		if (placeHolders === 2) {
+			tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
+			push(tmp & 0xFF)
+		} else if (placeHolders === 1) {
+			tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
+			push((tmp >> 8) & 0xFF)
+			push(tmp & 0xFF)
+		}
+
+		return arr
+	}
+
+	function uint8ToBase64 (uint8) {
+		var i,
+			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+			output = "",
+			temp, length
+
+		function encode (num) {
+			return lookup.charAt(num)
+		}
+
+		function tripletToBase64 (num) {
+			return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+		}
+
+		// go through the array every three bytes, we'll deal with trailing stuff later
+		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+			output += tripletToBase64(temp)
+		}
+
+		// pad the end with zeros, but make sure to not forget the extra bytes
+		switch (extraBytes) {
+			case 1:
+				temp = uint8[uint8.length - 1]
+				output += encode(temp >> 2)
+				output += encode((temp << 4) & 0x3F)
+				output += '=='
+				break
+			case 2:
+				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
+				output += encode(temp >> 10)
+				output += encode((temp >> 4) & 0x3F)
+				output += encode((temp << 2) & 0x3F)
+				output += '='
+				break
+		}
+
+		return output
+	}
+
+	exports.toByteArray = b64ToByteArray
+	exports.fromByteArray = uint8ToBase64
+}(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
+
+},{}],6:[function(require,module,exports){
+(function (global){
 /*!
  * The buffer module from node.js, for the browser.
  *
  * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
  * @license  MIT
  */
+/* eslint-disable no-proto */
+
+'use strict'
 
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
-var isArray = require('is-array')
+var isArray = require('isarray')
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -1845,7 +1840,11 @@ var rootParent = {}
  * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
  * get the Object implementation, which is slower but behaves correctly.
  */
-Buffer.TYPED_ARRAY_SUPPORT = (function () {
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+function typedArraySupport () {
   function Bar () {}
   try {
     var arr = new Uint8Array(1)
@@ -1858,7 +1857,7 @@ Buffer.TYPED_ARRAY_SUPPORT = (function () {
   } catch (e) {
     return false
   }
-})()
+}
 
 function kMaxLength () {
   return Buffer.TYPED_ARRAY_SUPPORT
@@ -1885,8 +1884,10 @@ function Buffer (arg) {
     return new Buffer(arg)
   }
 
-  this.length = 0
-  this.parent = undefined
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    this.length = 0
+    this.parent = undefined
+  }
 
   // Common case.
   if (typeof arg === 'number') {
@@ -2014,10 +2015,20 @@ function fromJsonObject (that, object) {
   return that
 }
 
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+} else {
+  // pre-set for values that may exist in the future
+  Buffer.prototype.length = undefined
+  Buffer.prototype.parent = undefined
+}
+
 function allocate (that, length) {
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     // Return an augmented `Uint8Array` instance, for best performance
     that = Buffer._augment(new Uint8Array(length))
+    that.__proto__ = Buffer.prototype
   } else {
     // Fallback: Return an object instance of the Buffer class
     that.length = length
@@ -2160,10 +2171,6 @@ function byteLength (string, encoding) {
   }
 }
 Buffer.byteLength = byteLength
-
-// pre-set for values that may exist in the future
-Buffer.prototype.length = undefined
-Buffer.prototype.parent = undefined
 
 function slowToString (encoding, start, end) {
   var loweredCase = false
@@ -2425,20 +2432,99 @@ function base64Slice (buf, start, end) {
 }
 
 function utf8Slice (buf, start, end) {
-  var res = ''
-  var tmp = ''
   end = Math.min(buf.length, end)
+  var res = []
 
-  for (var i = start; i < end; i++) {
-    if (buf[i] <= 0x7F) {
-      res += decodeUtf8Char(tmp) + String.fromCharCode(buf[i])
-      tmp = ''
-    } else {
-      tmp += '%' + buf[i].toString(16)
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
     }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
   }
 
-  return res + decodeUtf8Char(tmp)
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
 }
 
 function asciiSlice (buf, start, end) {
@@ -2727,7 +2813,7 @@ Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-  this[offset] = value
+  this[offset] = (value & 0xff)
   return offset + 1
 }
 
@@ -2744,7 +2830,7 @@ Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert
   offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = value
+    this[offset] = (value & 0xff)
     this[offset + 1] = (value >>> 8)
   } else {
     objectWriteUInt16(this, value, offset, true)
@@ -2758,7 +2844,7 @@ Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
-    this[offset + 1] = value
+    this[offset + 1] = (value & 0xff)
   } else {
     objectWriteUInt16(this, value, offset, false)
   }
@@ -2780,7 +2866,7 @@ Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert
     this[offset + 3] = (value >>> 24)
     this[offset + 2] = (value >>> 16)
     this[offset + 1] = (value >>> 8)
-    this[offset] = value
+    this[offset] = (value & 0xff)
   } else {
     objectWriteUInt32(this, value, offset, true)
   }
@@ -2795,7 +2881,7 @@ Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert
     this[offset] = (value >>> 24)
     this[offset + 1] = (value >>> 16)
     this[offset + 2] = (value >>> 8)
-    this[offset + 3] = value
+    this[offset + 3] = (value & 0xff)
   } else {
     objectWriteUInt32(this, value, offset, false)
   }
@@ -2848,7 +2934,7 @@ Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
   if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
-  this[offset] = value
+  this[offset] = (value & 0xff)
   return offset + 1
 }
 
@@ -2857,7 +2943,7 @@ Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) 
   offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = value
+    this[offset] = (value & 0xff)
     this[offset + 1] = (value >>> 8)
   } else {
     objectWriteUInt16(this, value, offset, true)
@@ -2871,7 +2957,7 @@ Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) 
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
-    this[offset + 1] = value
+    this[offset + 1] = (value & 0xff)
   } else {
     objectWriteUInt16(this, value, offset, false)
   }
@@ -2883,7 +2969,7 @@ Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) 
   offset = offset | 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = value
+    this[offset] = (value & 0xff)
     this[offset + 1] = (value >>> 8)
     this[offset + 2] = (value >>> 16)
     this[offset + 3] = (value >>> 24)
@@ -2902,7 +2988,7 @@ Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) 
     this[offset] = (value >>> 24)
     this[offset + 1] = (value >>> 16)
     this[offset + 2] = (value >>> 8)
-    this[offset + 3] = value
+    this[offset + 3] = (value & 0xff)
   } else {
     objectWriteUInt32(this, value, offset, false)
   }
@@ -3144,28 +3230,15 @@ function utf8ToBytes (string, units) {
   var length = string.length
   var leadSurrogate = null
   var bytes = []
-  var i = 0
 
-  for (; i < length; i++) {
+  for (var i = 0; i < length; i++) {
     codePoint = string.charCodeAt(i)
 
     // is surrogate component
     if (codePoint > 0xD7FF && codePoint < 0xE000) {
       // last char was a lead
-      if (leadSurrogate) {
-        // 2 leads in a row
-        if (codePoint < 0xDC00) {
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          leadSurrogate = codePoint
-          continue
-        } else {
-          // valid surrogate pair
-          codePoint = leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00 | 0x10000
-          leadSurrogate = null
-        }
-      } else {
+      if (!leadSurrogate) {
         // no lead yet
-
         if (codePoint > 0xDBFF) {
           // unexpected trail
           if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
@@ -3174,17 +3247,29 @@ function utf8ToBytes (string, units) {
           // unpaired lead
           if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
           continue
-        } else {
-          // valid lead
-          leadSurrogate = codePoint
-          continue
         }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
       }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
     } else if (leadSurrogate) {
       // valid bmp char, but last char was a lead
       if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-      leadSurrogate = null
     }
+
+    leadSurrogate = null
 
     // encode utf8
     if (codePoint < 0x80) {
@@ -3203,7 +3288,7 @@ function utf8ToBytes (string, units) {
         codePoint >> 0x6 & 0x3F | 0x80,
         codePoint & 0x3F | 0x80
       )
-    } else if (codePoint < 0x200000) {
+    } else if (codePoint < 0x110000) {
       if ((units -= 4) < 0) break
       bytes.push(
         codePoint >> 0x12 | 0xF0,
@@ -3256,264 +3341,17 @@ function blitBuffer (src, dst, offset, length) {
   return i
 }
 
-function decodeUtf8Char (str) {
-  try {
-    return decodeURIComponent(str)
-  } catch (err) {
-    return String.fromCharCode(0xFFFD) // UTF 8 invalid char
-  }
-}
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"base64-js":5,"ieee754":12,"isarray":7}],7:[function(require,module,exports){
+var toString = {}.toString;
 
-},{"base64-js":6,"ieee754":7,"is-array":8}],6:[function(require,module,exports){
-var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-;(function (exports) {
-	'use strict';
-
-  var Arr = (typeof Uint8Array !== 'undefined')
-    ? Uint8Array
-    : Array
-
-	var PLUS   = '+'.charCodeAt(0)
-	var SLASH  = '/'.charCodeAt(0)
-	var NUMBER = '0'.charCodeAt(0)
-	var LOWER  = 'a'.charCodeAt(0)
-	var UPPER  = 'A'.charCodeAt(0)
-	var PLUS_URL_SAFE = '-'.charCodeAt(0)
-	var SLASH_URL_SAFE = '_'.charCodeAt(0)
-
-	function decode (elt) {
-		var code = elt.charCodeAt(0)
-		if (code === PLUS ||
-		    code === PLUS_URL_SAFE)
-			return 62 // '+'
-		if (code === SLASH ||
-		    code === SLASH_URL_SAFE)
-			return 63 // '/'
-		if (code < NUMBER)
-			return -1 //no match
-		if (code < NUMBER + 10)
-			return code - NUMBER + 26 + 26
-		if (code < UPPER + 26)
-			return code - UPPER
-		if (code < LOWER + 26)
-			return code - LOWER + 26
-	}
-
-	function b64ToByteArray (b64) {
-		var i, j, l, tmp, placeHolders, arr
-
-		if (b64.length % 4 > 0) {
-			throw new Error('Invalid string. Length must be a multiple of 4')
-		}
-
-		// the number of equal signs (place holders)
-		// if there are two placeholders, than the two characters before it
-		// represent one byte
-		// if there is only one, then the three characters before it represent 2 bytes
-		// this is just a cheap hack to not do indexOf twice
-		var len = b64.length
-		placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
-
-		// base64 is 4/3 + up to two characters of the original data
-		arr = new Arr(b64.length * 3 / 4 - placeHolders)
-
-		// if there are placeholders, only get up to the last complete 4 chars
-		l = placeHolders > 0 ? b64.length - 4 : b64.length
-
-		var L = 0
-
-		function push (v) {
-			arr[L++] = v
-		}
-
-		for (i = 0, j = 0; i < l; i += 4, j += 3) {
-			tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
-			push((tmp & 0xFF0000) >> 16)
-			push((tmp & 0xFF00) >> 8)
-			push(tmp & 0xFF)
-		}
-
-		if (placeHolders === 2) {
-			tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
-			push(tmp & 0xFF)
-		} else if (placeHolders === 1) {
-			tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
-			push((tmp >> 8) & 0xFF)
-			push(tmp & 0xFF)
-		}
-
-		return arr
-	}
-
-	function uint8ToBase64 (uint8) {
-		var i,
-			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-			output = "",
-			temp, length
-
-		function encode (num) {
-			return lookup.charAt(num)
-		}
-
-		function tripletToBase64 (num) {
-			return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-		}
-
-		// go through the array every three bytes, we'll deal with trailing stuff later
-		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-			output += tripletToBase64(temp)
-		}
-
-		// pad the end with zeros, but make sure to not forget the extra bytes
-		switch (extraBytes) {
-			case 1:
-				temp = uint8[uint8.length - 1]
-				output += encode(temp >> 2)
-				output += encode((temp << 4) & 0x3F)
-				output += '=='
-				break
-			case 2:
-				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
-				output += encode(temp >> 10)
-				output += encode((temp >> 4) & 0x3F)
-				output += encode((temp << 2) & 0x3F)
-				output += '='
-				break
-		}
-
-		return output
-	}
-
-	exports.toByteArray = b64ToByteArray
-	exports.fromByteArray = uint8ToBase64
-}(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
-
-},{}],7:[function(require,module,exports){
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-},{}],8:[function(require,module,exports){
-
-/**
- * isArray
- */
-
-var isArray = Array.isArray;
-
-/**
- * toString
- */
-
-var str = Object.prototype.toString;
-
-/**
- * Whether or not the given `val`
- * is an array.
- *
- * example:
- *
- *        isArray([]);
- *        // > true
- *        isArray(arguments);
- *        // > false
- *        isArray('');
- *        // > false
- *
- * @param {mixed} val
- * @return {bool}
- */
-
-module.exports = isArray || function (val) {
-  return !! val && '[object Array]' == str.call(val);
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
 };
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (Buffer){
-//  Chance.js 0.7.7
+//  Chance.js 0.8.0
 //  http://chancejs.com
 //  (c) 2013 Victor Quinn
 //  Chance may be freely distributed or modified under the MIT license.
@@ -3543,19 +3381,23 @@ module.exports = isArray || function (val) {
             return this;
         }
 
-        var seedling;
-
         if (arguments.length) {
             // set a starting value of zero so we can add to it
             this.seed = 0;
         }
-        // otherwise, leave this.seed blank so that MT will recieve a blank
+
+        // otherwise, leave this.seed blank so that MT will receive a blank
 
         for (var i = 0; i < arguments.length; i++) {
-            seedling = 0;
-            if (typeof arguments[i] === 'string') {
+            var seedling = 0;
+            if (Object.prototype.toString.call(arguments[i]) === '[object String]') {
                 for (var j = 0; j < arguments[i].length; j++) {
-                    seedling += (arguments[i].length - j) * arguments[i].charCodeAt(j);
+                    // create a numeric hash for each argument, add to seedling
+                    var hash = 0;
+                    for (var k = 0; k < arguments[i].length; k++) {
+                        hash = arguments[i].charCodeAt(k) + (hash << 6) + (hash << 16) - hash;
+                    }
+                    seedling += hash;
                 }
             } else {
                 seedling = arguments[i];
@@ -3573,7 +3415,7 @@ module.exports = isArray || function (val) {
         return this;
     }
 
-    Chance.prototype.VERSION = "0.7.7";
+    Chance.prototype.VERSION = "0.8.0";
 
     // Random helper functions
     function initOptions(options, defaults) {
@@ -6104,8 +5946,14 @@ module.exports = isArray || function (val) {
 })();
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5}],10:[function(require,module,exports){
-var eaw = exports;
+},{"buffer":6}],9:[function(require,module,exports){
+var eaw = {};
+
+if ('undefined' == typeof module) {
+  window.eastasianwidth = eaw;
+} else {
+  module.exports = eaw;
+}
 
 eaw.eastAsianWidth = function(character) {
   var x = character.charCodeAt(0);
@@ -6377,13 +6225,24 @@ eaw.length = function(string) {
   return len;
 };
 
-},{}],11:[function(require,module,exports){
-module.exports = require('./src/PathFinding');
+eaw.slice = function(text, start, end) {
+  start = start ? start : 0;
+  end = end ? end : 1;
+  var result = '';
+  for (var i = 0; i < text.length; i++) {
+    var char = text.charAt(i);
+    var eawLen = eaw.length(result + char);
+    if (eawLen >= 1 + start && eawLen < 1 + end) {
+      result += char
+    }
+  }
+  return result;
+};
 
-},{"./src/PathFinding":14}],12:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = require('./lib/heap');
 
-},{"./lib/heap":13}],13:[function(require,module,exports){
+},{"./lib/heap":11}],11:[function(require,module,exports){
 // Generated by CoffeeScript 1.8.0
 (function() {
   var Heap, defaultCmp, floor, heapify, heappop, heappush, heappushpop, heapreplace, insort, min, nlargest, nsmallest, updateItem, _siftdown, _siftup;
@@ -6754,7 +6613,96 @@ module.exports = require('./lib/heap');
 
 }).call(this);
 
-},{}],14:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],13:[function(require,module,exports){
+module.exports = require('./src/PathFinding');
+
+},{"./src/PathFinding":14}],14:[function(require,module,exports){
 module.exports = {
     'Heap'                      : require('heap'),
     'Node'                      : require('./core/Node'),
@@ -6774,7 +6722,7 @@ module.exports = {
     'JumpPointFinder'           : require('./finders/JumpPointFinder'),
 };
 
-},{"./core/DiagonalMovement":15,"./core/Grid":16,"./core/Heuristic":17,"./core/Node":18,"./core/Util":19,"./finders/AStarFinder":20,"./finders/BestFirstFinder":21,"./finders/BiAStarFinder":22,"./finders/BiBestFirstFinder":23,"./finders/BiBreadthFirstFinder":24,"./finders/BiDijkstraFinder":25,"./finders/BreadthFirstFinder":26,"./finders/DijkstraFinder":27,"./finders/IDAStarFinder":28,"./finders/JumpPointFinder":33,"heap":12}],15:[function(require,module,exports){
+},{"./core/DiagonalMovement":15,"./core/Grid":16,"./core/Heuristic":17,"./core/Node":18,"./core/Util":19,"./finders/AStarFinder":20,"./finders/BestFirstFinder":21,"./finders/BiAStarFinder":22,"./finders/BiBestFirstFinder":23,"./finders/BiBreadthFirstFinder":24,"./finders/BiDijkstraFinder":25,"./finders/BreadthFirstFinder":26,"./finders/DijkstraFinder":27,"./finders/IDAStarFinder":28,"./finders/JumpPointFinder":33,"heap":10}],15:[function(require,module,exports){
 var DiagonalMovement = {
     Always: 1,
     Never: 2,
@@ -7487,7 +7435,7 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = AStarFinder;
 
-},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":12}],21:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":10}],21:[function(require,module,exports){
 var AStarFinder = require('./AStarFinder');
 
 /**
@@ -7694,7 +7642,7 @@ BiAStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
 module.exports = BiAStarFinder;
 
-},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":12}],23:[function(require,module,exports){
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":10}],23:[function(require,module,exports){
 var BiAStarFinder = require('./BiAStarFinder');
 
 /**
@@ -8929,5 +8877,5 @@ JumpPointFinderBase.prototype._identifySuccessors = function(node) {
 
 module.exports = JumpPointFinderBase;
 
-},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":12}]},{},[4])(4)
+},{"../core/DiagonalMovement":15,"../core/Heuristic":17,"../core/Util":19,"heap":10}]},{},[4])(4)
 });
