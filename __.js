@@ -25,8 +25,8 @@ __.loadLang = function (lang_name, lang_map, is_east_asia) {
   __[lang_name] = obj;
 };
 
-__.loadLang("ja", require('./__ja.po2json.json'), true);
+__.loadLang("ja", require('./__ja.po.json'), true);
 
-//__.loadLang("ab", require('./__ab.po2json.json'));
+//__.loadLang("ab", require('./__ab.po.json'));
 
 module.exports = __;
