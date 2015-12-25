@@ -12,4 +12,5 @@ android-run: gotandadiamondmine-html5.browserify.js
 	cordova run android
 
 xgettext:
+	perl -i'*' -ne 'print if not s{^#.*$}{}' __ja.po
 	xgettext --extract-all --join-existing --sort-by-file --language=C --default-domain=__ja gotandadiamondmine.js
