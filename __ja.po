@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-26 03:34+0900\n"
+"POT-Creation-Date: 2015-12-26 03:38+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,8 +57,8 @@ msgid "Choose a hero"
 msgstr "ヒーローを選んでください"
 
 #: gotandadiamondmine.js:1046
-msgid "Choose a mine"
-msgstr "採掘する坑道を選んでください"
+msgid "Choose a next mine"
+msgstr "採掘する次の坑道を選んでください"
 
 #: gotandadiamondmine.js:1058
 msgid "Choose a place"
@@ -91,9 +91,6 @@ msgstr ""
 #: gotandadiamondmine.js:1072
 msgid "Combine these items"
 msgstr "アイテムを結合する"
-
-msgid "Destroy this item"
-msgstr "このアイテムを壊す"
 
 #: gotandadiamondmine.js:62 gotandadiamondmine.js:95
 msgid "Energy"

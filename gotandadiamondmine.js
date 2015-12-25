@@ -1043,7 +1043,7 @@ GotandaDiamondMine.prototype.getButton = function () {
     }
   } else if (state === GotandaDiamondMine.STATE_CHOOSE_MINE) {
     if (this.selectedMine === -1) {
-      return this.getButtonBox("Choose a mine", 'gray');
+      return this.getButtonBox("Choose a next mine", 'gray');
     } else {
       return this.getButtonBox("Choose this mine", 'lime');
     }
