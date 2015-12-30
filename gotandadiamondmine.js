@@ -960,7 +960,7 @@ GotandaDiamondMine.prototype.createDeckFromTemplate = function (max_num) {
       return item[0] === symbol && item[2] === 1; // Level 1
     };
   };
-  for (var i = 0, l = Math.max(max_num, array.length); i < l; ++i) {
+  for (var i = 0, l = Math.min(max_num, array.length); i < l; ++i) {
     deck.push(this.chance.shuffle(GotandaDiamondMine.ITEMS.filter(check_symbol(array[i])))[0]);
   }
   this.itemsInOriginalDeck = deck;
@@ -997,7 +997,7 @@ GotandaDiamondMine.prototype.createItemsOnHand = function (reset_ok) {
     this.itemsInDeck = this.chance.shuffle(this.itemsInOriginalDeck);
 
   } else if (this.itemsOnHand.length <= 10 && this.itemsInDeck.length !== 0) { // draw deck
-    var draw_num = 2;
+    var draw_num = 1;
     while (this.itemsInDeck.length !== 0 && this.itemsOnHand.length <= 10 && 0 <= --draw_num) {
       this.itemsOnHand.push(this.itemsInDeck.pop());
     }
