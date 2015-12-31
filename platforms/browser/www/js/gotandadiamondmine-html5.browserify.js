@@ -1147,7 +1147,7 @@ GotandaDiamondMine.prototype.getScreenToChooseMine = function () {
     var display_mine = this.mineChoices[i] ? this.getDetailMineInfo(this.mineChoices[i]) : GotandaDiamondMine.EMPTY_LINED_BOX;
     mines = mines.concat(i === this.selectedMine ? display_mine : GotandaDiamondMine.colorScreen(display_mine, 'green'));
   }
-  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), mines, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo2()));
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), mines, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo()));
 };
 
 
@@ -1184,7 +1184,7 @@ GotandaDiamondMine.prototype.getScreenToChooseItem = function () {
     var item = this.itemChoices[i] ? this.getDetailItemInfo(this.itemChoices[i]) : GotandaDiamondMine.EMPTY_BOX;
     items = items.concat(i === this.selectedItem ? item : GotandaDiamondMine.colorScreen(item, 'green'));
   }
-  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), items, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo2()));
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), items, GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo()));
 };
 
 GotandaDiamondMine.prototype.getScreenToUpgrade = function () {
@@ -1192,7 +1192,7 @@ GotandaDiamondMine.prototype.getScreenToUpgrade = function () {
 };
 
 GotandaDiamondMine.prototype.getScreenDefault = function () {
-  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), this.getMap(), GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo2()));
+  return [].concat(this.getButton(), this.getStatus(), this.getWaveInfo(), this.getMap(), GotandaDiamondMine.paste(this.getHandInfo(), this.getItemInfo()));
 };
 
 GotandaDiamondMine.getWaveInfoString = function (wave, num) {
@@ -1240,7 +1240,7 @@ GotandaDiamondMine.prototype.getWaveInfo = function () {
   return wave_now.concat(GotandaDiamondMine.colorScreen(wave_next, 'gray'));
 };
 
-GotandaDiamondMine.prototype.getMap = function () {
+GotandaDiamondMine.prototype.getMap = function () { // 54 x 27
   var state = this.state;
   var map_symbol = this.mapSymbol;
   var map_color = this.mapColor;
@@ -1282,7 +1282,7 @@ GotandaDiamondMine.prototype.getStatus = function () {
   return GotandaDiamondMine.colorScreen([ (info_str + '                           ').split('') ], 'gray');
 };
 
-GotandaDiamondMine.getItemInfoLine2 = function (item) {
+GotandaDiamondMine.getItemInfoLine = function (item) {
   var info_str = item[0] + item[2];
   for (var key in item[4]) {
     if (key !== 'Target Depth' && key !== 'Price') {
@@ -1306,7 +1306,7 @@ GotandaDiamondMine.prototype.getHandInfo = function (is_hand) { // 27 x 11
       info.push(GotandaDiamondMine.EMPTY_HALF_LINE);
       indexes.push(-1);
     } else {
-      var info_line = GotandaDiamondMine.getItemInfoLine2(items_on_hand[index]);
+      var info_line = GotandaDiamondMine.getItemInfoLine(items_on_hand[index]);
       if (state === GotandaDiamondMine.STATE_CHOOSE_HAND && this.selectedItem === index) {
         info_line = GotandaDiamondMine.colorScreen(info_line, 'aqua');
       } else if (state === GotandaDiamondMine.STATE_CONFIRM || state === GotandaDiamondMine.STATE_CHOOSE_HAND) {
@@ -1322,7 +1322,7 @@ GotandaDiamondMine.prototype.getHandInfo = function (is_hand) { // 27 x 11
   return info;
 };
 
-GotandaDiamondMine.prototype.getItemInfo2 = function (is_hand) { // 27 x 11
+GotandaDiamondMine.prototype.getItemInfo = function (is_hand) { // 27 x 11
   var state = this.state;
   var info = [];
   var indexes = this.indexesToPoint = []; // using to point
@@ -1334,7 +1334,7 @@ GotandaDiamondMine.prototype.getItemInfo2 = function (is_hand) { // 27 x 11
       info.push(GotandaDiamondMine.EMPTY_HALF_LINE);
       indexes.push(-1);
     } else {
-      var info_line = GotandaDiamondMine.getItemInfoLine2(items_on_map[index]);
+      var info_line = GotandaDiamondMine.getItemInfoLine(items_on_map[index]);
       if (state === GotandaDiamondMine.STATE_PLACE && index !== this.placingItem) {
         info_line = GotandaDiamondMine.colorScreen(info_line, 'gray');
       }
@@ -1376,11 +1376,11 @@ GotandaDiamondMine.prototype.getUpgradeItemInfo = function () {
     } else if (items_on_map.length <= index) {
       info.push(GotandaDiamondMine.EMPTY_LINE);
     } else if (index === this.confirmingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'aqua')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'aqua')[0]);
     } else if (index === this.sacrificingItem) {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'fuchsia')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'fuchsia')[0]);
     } else {
-      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine2(items_on_map[index]), 'green')[0]);
+      info.push(GotandaDiamondMine.colorScreen(GotandaDiamondMine.getItemInfoLine(items_on_map[index]), 'green')[0]);
     }
     indexes.push(second_offset && i === center_num || items_on_map.length <= index ? -1 : index);
   }
@@ -1422,7 +1422,7 @@ __.loadLang("ja", require('./__ja.po.json'), true);
 module.exports = __;
 
 },{"./__ja.po.json":3,"eastasianwidth":9}],3:[function(require,module,exports){
-module.exports={"":"Project-Id-Version: PACKAGE VERSION\nReport-Msgid-Bugs-To: \nPOT-Creation-Date: 2015-12-31 02:44+0900\nPO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\nLast-Translator: FULL NAME <EMAIL@ADDRESS>\nLanguage-Team: LANGUAGE <LL@li.org>\nLanguage: \nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n","Items":"","Physical Damage":"物理ダメージ","Price":"価格","Target Depth":"","Upgrade":"でアップグレード","a dagger":"ダガー","a short sword":"短剣","a pole axe":"ポールアックス","Energy":"エネルギー","an apple":"リンゴ","Physical Damage Buff":"物理ダメージUP","an amulet of damage":"ダメージの首飾り","Armor Class":"アーマークラス","\\ Luck Bonus":"\\ 幸運UP","a ring armour":"リングアーマー","a rock":"石","An edged weapon":"","A hafted weapon":"","A pole weapon":"","Fire Damage":"","Cold Damage":"","Lightning Damage":"","Poison Damage":"毒ダメージ","All Resistance":"","Fire Resistance":"","Cold Resistance":"","Lightning Resistance":"","Poison Resistance":"毒耐性","HP":"HP","*":"*","Small":"小部屋","Flats":"平野","Paddy":"田んぼ","Play":"プレイする","Choose a hero":"ヒーローを選んでください","Choose this hero":"このヒーローを選ぶ","Choose a next mine":"採掘する次の坑道を選んでください","Choose this mine":"この場所にする","Which items to place?":"アイテムを選んでください","Choose this item":"このアイテムにする","Blocking!":"経路がありません","Choose a place":"場所を選んでください","Choose this place":"この場所にする","Preview the path":"経路をプレビューする","Go to next wave":"次のウェーブ","Replace this item":"アイテムを再配置する","Combine these items":"アイテムを結合する","Cannot combine!":"その組み合わせは結合できません！","Now progressing":"処理中です…","Which item to gain?":"どのアイテムを獲得しますか？","You died":"あなたは死にました","You have finished this work; Take the loot":"この坑道の採掘を終えました; 戦利品を獲得します"}
+module.exports={"":"Project-Id-Version: PACKAGE VERSION\nReport-Msgid-Bugs-To: \nPOT-Creation-Date: 2015-12-31 11:23+0900\nPO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\nLast-Translator: FULL NAME <EMAIL@ADDRESS>\nLanguage-Team: LANGUAGE <LL@li.org>\nLanguage: \nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n","Items":"","Physical Damage":"物理ダメージ","Price":"価格","Target Depth":"","Upgrade":"でアップグレード","a dagger":"ダガー","a short sword":"短剣","a pole axe":"ポールアックス","Energy":"エネルギー","an apple":"リンゴ","Physical Damage Buff":"物理ダメージUP","an amulet of damage":"ダメージの首飾り","Armor Class":"アーマークラス","\\ Luck Bonus":"\\ 幸運UP","a ring armour":"リングアーマー","a rock":"石","An edged weapon":"","A hafted weapon":"","A pole weapon":"","Fire Damage":"","Cold Damage":"","Lightning Damage":"","Poison Damage":"毒ダメージ","All Resistance":"","Fire Resistance":"","Cold Resistance":"","Lightning Resistance":"","Poison Resistance":"毒耐性","HP":"HP","*":"*","Small":"小部屋","Flats":"平野","Paddy":"田んぼ","Play":"プレイする","Choose a hero":"ヒーローを選んでください","Choose this hero":"このヒーローを選ぶ","Choose a next mine":"採掘する次の坑道を選んでください","Choose this mine":"この場所にする","Which items to place?":"アイテムを選んでください","Choose this item":"このアイテムにする","Blocking!":"経路がありません","Choose a place":"場所を選んでください","Choose this place":"この場所にする","Preview the path":"経路をプレビューする","Go to next wave":"次のウェーブ","Replace this item":"アイテムを再配置する","Combine these items":"アイテムを結合する","Cannot combine!":"その組み合わせは結合できません！","Now progressing":"処理中です…","Which item to gain?":"どのアイテムを獲得しますか？","You died":"あなたは死にました","You have finished this work; Take the loot":"この坑道の採掘を終えました; 戦利品を獲得します"}
 },{}],4:[function(require,module,exports){
 var GotandaDiamondMine = require('./GotandaDiamondMine');
 
